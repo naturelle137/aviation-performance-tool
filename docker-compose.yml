@@ -1,0 +1,63 @@
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aviation:aviation@db:5432/aviation
+      - APP_ENV=development
+      - DEBUG=true
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+    volumes:
+      - ./backend/app:/app/app:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - aviation-network
+
+  # Frontend (development mode)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - aviation-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=aviation
+      - POSTGRES_PASSWORD=aviation
+      - POSTGRES_DB=aviation
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aviation -d aviation"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aviation-network
+
+volumes:
+  postgres_data:
+
+networks:
+  aviation-network:
+    driver: bridge

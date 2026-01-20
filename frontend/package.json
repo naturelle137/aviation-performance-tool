@@ -1,0 +1,48 @@
+{
+    "name": "aviation-performance-frontend",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vue-tsc --noEmit && vite build",
+        "preview": "vite preview",
+        "test:unit": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "test:e2e": "playwright test",
+        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+        "type-check": "vue-tsc --noEmit"
+    },
+    "dependencies": {
+        "vue": "^3.4.15",
+        "vue-router": "^4.2.5",
+        "pinia": "^2.1.7",
+        "axios": "^1.6.5",
+        "primevue": "^3.48.1",
+        "primeicons": "^6.0.1",
+        "chart.js": "^4.4.1",
+        "vue-chartjs": "^5.3.0",
+        "vee-validate": "^4.12.4",
+        "zod": "^3.22.4",
+        "@vee-validate/zod": "^4.12.4"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.41.0",
+        "@types/node": "^20.11.5",
+        "@vitejs/plugin-vue": "^5.0.3",
+        "@vue/test-utils": "^2.4.4",
+        "@vue/tsconfig": "^0.5.1",
+        "eslint": "^8.56.0",
+        "eslint-plugin-vue": "^9.20.1",
+        "@typescript-eslint/eslint-plugin": "^6.19.0",
+        "@typescript-eslint/parser": "^6.19.0",
+        "typescript": "^5.3.3",
+        "vite": "^5.0.12",
+        "vitest": "^1.2.1",
+        "@vitest/coverage-v8": "^1.2.1",
+        "vue-tsc": "^1.8.27",
+        "jsdom": "^24.0.0",
+        "@stryker-mutator/core": "^8.0.0",
+        "@stryker-mutator/vitest-runner": "^8.0.0"
+    }
+}
