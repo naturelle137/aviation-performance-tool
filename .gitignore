@@ -73,3 +73,9 @@ htmlcov/
 # Logs
 logs/
 *.log
+
+# Internal References
+docs/references/
+
+# Scripts
+extract_pdfs.py
