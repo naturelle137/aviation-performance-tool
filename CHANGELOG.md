@@ -9,10 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Project documentation structure
-- Requirements specification with EARS syntax (initial_requirements.md)
-- Safety Traceability Matrix with hazard log (safety_traceability_matrix.md)
-- Branching strategy documentation (BRANCHING_STRATEGY.md)
-- Contribution guidelines with conventional commits (CONTRIBUTING.md)
+- Requirements specification with EARS syntax (`initial_requirements.md`)
+- Safety Traceability Matrix with hazard log (`safety_traceability_matrix.md`)
+- Branching strategy documentation (`BRANCHING_STRATEGY.md`)
+- Contribution guidelines with conventional commits (`CONTRIBUTING.md`)
+- Technical documentation suite:
+  - Architecture documentation (`ARCHITECTURE.md`)
+  - REST API documentation (`API.md`)
+  - Testing strategy and requirements (`TESTING.md`)
+- Component-level documentation (`backend/README.md`, `frontend/README.md`)
 - Priority system (P1-P3) for requirements
 
 ### Changed
