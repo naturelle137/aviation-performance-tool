@@ -144,3 +144,4 @@ jobs:
         run: |
           docker build -t aviation-backend ./backend
           docker build -t aviation-frontend ./frontend
+

@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib.pyplot as plt
 
+from app.models.aircraft import CGEnvelope
 from app.schemas.calculation import CGPoint, MassBalanceResponse, WeightInput
 
 matplotlib.use("Agg")  # Non-interactive backend for server use
@@ -167,7 +168,7 @@ class MassBalanceService:
         self,
         weight_kg: float,
         arm_m: float,
-        envelope: "CGEnvelope | None",
+        envelope: CGEnvelope | None,
     ) -> bool:
         """Check if a point is within the CG envelope.
 
@@ -195,7 +196,7 @@ class MassBalanceService:
     def _generate_chart(
         self,
         cg_points: list[CGPoint],
-        envelope: "CGEnvelope | None",
+        envelope: CGEnvelope | None,
     ) -> str | None:
         """Generate a M&B chart as base64 encoded PNG.
 

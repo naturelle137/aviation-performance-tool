@@ -20,12 +20,12 @@ async def get_metar(icao: str) -> MetarResponse:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Weather service unavailable: {e}",
-        )
+        ) from e
 
 
 @router.get("/taf/{icao}", response_model=TafResponse)
@@ -40,9 +40,9 @@ async def get_taf(icao: str) -> TafResponse:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Weather service unavailable: {e}",
-        )
+        ) from e

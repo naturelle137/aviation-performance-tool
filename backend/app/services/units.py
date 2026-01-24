@@ -4,13 +4,13 @@ Implements REQ-SYS-03, REQ-UQ-04, REQ-AC-13.
 Mitigates Hazard H-01 (Unit confusion).
 """
 
-from typing import TypeVar, Type, cast
+from typing import TypeVar
 
 T = TypeVar("T", bound="BaseUnit")
 
 class BaseUnit(float):
     """Base class for all branded unit types.
-    
+
     Strictly validates input to be a number (int or float) and not a boolean.
     """
     def __new__(cls, value: object) -> "BaseUnit":

@@ -1,6 +1,6 @@
 """Weather service for METAR/TAF retrieval."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -94,7 +94,7 @@ class WeatherService:
         try:
             time = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
         except (ValueError, AttributeError):
-            time = datetime.now(timezone.utc)
+            time = datetime.now(UTC)
 
         # Parse clouds
         clouds = []
@@ -134,7 +134,7 @@ class WeatherService:
                 data.get("time", {}).get("dt", "").replace("Z", "+00:00")
             )
         except (ValueError, AttributeError):
-            issued = datetime.now(timezone.utc)
+            issued = datetime.now(UTC)
 
         try:
             valid_from = datetime.fromisoformat(
@@ -184,7 +184,7 @@ class WeatherService:
         return MetarResponse(
             raw=f"{icao} 201350Z 27008KT 9999 FEW040 12/04 Q1023",
             station=icao,
-            time=datetime.now(timezone.utc),
+            time=datetime.now(UTC),
             wind_direction=270,
             wind_speed_kt=8,
             wind_gust_kt=None,
@@ -204,7 +204,7 @@ class WeatherService:
         Returns:
             Mock TafResponse.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return TafResponse(
             raw=f"{icao} 201100Z 2012/2112 27010KT 9999 FEW040",
             station=icao,
