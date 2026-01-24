@@ -4,7 +4,10 @@ Implements REQ-SYS-03, REQ-UQ-04, REQ-AC-13.
 Mitigates Hazard H-01 (Unit confusion).
 """
 
+import logging
 from typing import TypeVar
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound="BaseUnit")
 
@@ -16,6 +19,10 @@ class BaseUnit(float):
     def __new__(cls, value: object) -> "BaseUnit":
         if isinstance(value, bool):
             raise TypeError(f"{cls.__name__} cannot be initialized with a boolean")
+
+        # Safety logging for unit initialization
+        logger.debug("Initializing safety unit %s with value: %s", cls.__name__, value)
+
         return super().__new__(cls, value)  # type: ignore[arg-type]
 
     def __repr__(self) -> str:

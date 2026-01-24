@@ -72,6 +72,15 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "p1: P1 (Safety-critical) requirement",
+    "p2: P2 (Operational) requirement",
+    "p3: P3 (Comfort) requirement",
+    "safety: Safety-specific test",
+    "slow: Long-running test",
+    "integration: Integration test",
+    "mvp: Tests verifying Phase 1 MVP core services",
+]
 addopts = "-v --cov=app --cov-report=term-missing"
 
 [tool.coverage.run]
