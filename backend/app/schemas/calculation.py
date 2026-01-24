@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.services.units import Kilogram, Liter, Meter
+from app.services.units import Celsius, Feet, Kilogram, Knot, Liter, Meter
 
 
 class WeightInput(BaseModel):
@@ -67,10 +67,10 @@ class PerformanceRequest(BaseModel):
     """Request schema for performance calculation."""
 
     aircraft_id: int = Field(..., examples=[1])
-    weight_kg: float = Field(..., gt=0, examples=[1050.0])
-    pressure_altitude_ft: float = Field(..., examples=[2000.0])
-    temperature_c: float = Field(..., examples=[25.0])
-    wind_component_kt: float = Field(default=0, examples=[-5.0])  # negative = headwind
+    weight_kg: Kilogram = Field(..., gt=0, examples=[1050.0])
+    pressure_altitude_ft: Feet = Field(..., examples=[2000.0])
+    temperature_c: Celsius = Field(..., examples=[25.0])
+    wind_component_kt: Knot = Field(default=Knot(0), examples=[-5.0])  # negative = headwind
     runway_condition: Literal["dry", "wet", "grass"] = Field(default="dry")
     runway_slope_percent: float = Field(default=0, ge=-3, le=3)
 
@@ -78,16 +78,23 @@ class PerformanceRequest(BaseModel):
 class PerformanceResponse(BaseModel):
     """Response schema for performance calculation."""
 
+    # Atmosphere
+    density_altitude_ft: Feet
+
     # Takeoff
-    takeoff_ground_roll_m: float
-    takeoff_distance_50ft_m: float
+    takeoff_ground_roll_m: Meter
+    takeoff_distance_50ft_m: Meter
+    takeoff_ground_roll_raw_m: Meter | None = None
+    takeoff_distance_50ft_raw_m: Meter | None = None
 
     # Landing
-    landing_ground_roll_m: float
-    landing_distance_50ft_m: float
+    landing_ground_roll_m: Meter
+    landing_distance_50ft_m: Meter
+    landing_ground_roll_raw_m: Meter | None = None
+    landing_distance_50ft_raw_m: Meter | None = None
 
     # Climb
-    rate_of_climb_fpm: float | None = None
+    rate_of_climb_fpm: Feet | None = None
 
     # Corrections applied
     corrections_applied: list[str] = []

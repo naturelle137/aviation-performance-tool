@@ -59,7 +59,7 @@ async def calculate_performance(
 
     # Perform calculation
     service = PerformanceService(aircraft)
-    result = service.calculate(
+    result = await service.calculate(
         weight_kg=request.weight_kg,
         pressure_altitude_ft=request.pressure_altitude_ft,
         temperature_c=request.temperature_c,

@@ -82,3 +82,11 @@ class InchPound(BaseUnit):
 class KilogramPerLiter(BaseUnit):
     """Density in kg/L."""
     pass
+
+class Celsius(BaseUnit):
+    """Temperature in Celsius."""
+    pass
+
+class Knot(BaseUnit):
+    """Speed in knots."""
+    pass
