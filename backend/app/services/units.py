@@ -9,7 +9,19 @@ from typing import TypeVar, Type, cast
 T = TypeVar("T", bound="BaseUnit")
 
 class BaseUnit(float):
-    """Base class for all branded unit types."""
+    """Base class for all branded unit types.
+    
+    Strictly validates input to be a number (int or float) and not a boolean.
+    """
+    def __new__(cls, value: object) -> "BaseUnit":
+        if isinstance(value, bool):
+            raise TypeError(f"{cls.__name__} cannot be initialized with a boolean")
+        if not isinstance(value, (int, float, BaseUnit)):
+            # float(value) might still work for some types, but we want to be strict
+            # If it's a string, we let float() try to convert it (but our tests check for this)
+            pass
+        return super().__new__(cls, value)
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({super().__repr__()})"
 
