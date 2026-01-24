@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.aircraft import FuelType
-from app.services.units import Feet, Gallon, Kilogram, Liter, Meter, Pound
+from app.services.units import Kilogram, Liter, Meter
 
 
 class WeightStationCreate(BaseModel):
@@ -30,9 +30,9 @@ class FuelTankCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=50, examples=["Main Tank"])
     capacity_l: Liter = Field(..., gt=0, examples=[100.0])
     arm_m: Meter = Field(..., gt=0, examples=[2.40])
-    unusable_fuel_l: Liter = Field(default=0.0, ge=0, examples=[3.8])
+    unusable_fuel_l: Liter = Field(default=Liter(0.0), ge=0, examples=[3.8])
     fuel_type: FuelType = Field(default=FuelType.AVGAS_100LL)
-    default_quantity_l: Liter = Field(default=0.0, ge=0)
+    default_quantity_l: Liter = Field(default=Liter(0.0), ge=0)
 
 
 class FuelTankResponse(FuelTankCreate):
@@ -77,10 +77,10 @@ class AircraftBase(BaseModel):
     """Base schema for aircraft data."""
 
     registration: str = Field(
-        ..., 
+        ...,
         pattern=r"^[A-Z0-9]{2,10}$|^[A-Z0-9]{1,3}-[A-Z0-9]{1,5}$",
-        min_length=3, 
-        max_length=10, 
+        min_length=3,
+        max_length=10,
         examples=["D-EABC"]
     )
     aircraft_type: str = Field(..., min_length=1, max_length=50, examples=["C172S"])

@@ -45,9 +45,23 @@ class MassBalanceService:
         """
         warnings: list[str] = []
 
-        # Calculate fuel weight
-        fuel_weight_kg = fuel_liters * self.aircraft.fuel_density_kg_l
-        trip_fuel_weight_kg = trip_fuel_liters * self.aircraft.fuel_density_kg_l
+        # Calculate fuel weight (Patched for Draft consistency)
+        # TODO: Update to handle per-tank fuel input
+        fuel_density = 0.72  # Default
+        fuel_arm = 0.0
+
+        if self.aircraft.fuel_tanks:
+            # For draft consistency, use the first tank's characteristics if available
+            # Standard densities: AvGas=0.72, Diesel=0.84, JetA1=0.84
+            tank = self.aircraft.fuel_tanks[0]
+            fuel_arm = tank.arm_m
+            if "Diesel" in tank.fuel_type.value or "Jet" in tank.fuel_type.value:
+                fuel_density = 0.84
+            else:
+                fuel_density = 0.72
+
+        fuel_weight_kg = fuel_liters * fuel_density
+        trip_fuel_weight_kg = trip_fuel_liters * fuel_density
         landing_fuel_weight_kg = fuel_weight_kg - trip_fuel_weight_kg
 
         # Calculate payload
@@ -63,8 +77,8 @@ class MassBalanceService:
 
         # Calculate moments
         empty_moment = self.aircraft.empty_weight_kg * self.aircraft.empty_arm_m
-        fuel_moment = fuel_weight_kg * self.aircraft.fuel_arm_m
-        landing_fuel_moment = landing_fuel_weight_kg * self.aircraft.fuel_arm_m
+        fuel_moment = fuel_weight_kg * fuel_arm
+        landing_fuel_moment = landing_fuel_weight_kg * fuel_arm
 
         # Calculate payload moment (match inputs to weight stations)
         payload_moment = 0.0
