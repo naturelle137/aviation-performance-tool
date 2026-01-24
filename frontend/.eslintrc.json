@@ -6,14 +6,20 @@
         "node": true
     },
     "extends": [
-        "plugin:vue/vue3-essential",
         "eslint:recommended",
-        "@vue/eslint-config-typescript",
-        "@vue/eslint-config-prettier/skip-formatting"
+        "plugin:vue/vue3-essential",
+        "plugin:@typescript-eslint/recommended"
     ],
+    "parser": "vue-eslint-parser",
     "parserOptions": {
-        "ecmaVersion": "latest"
+        "parser": "@typescript-eslint/parser",
+        "ecmaVersion": "latest",
+        "sourceType": "module"
     },
+    "plugins": [
+        "vue",
+        "@typescript-eslint"
+    ],
     "rules": {
         "vue/multi-word-component-names": "off"
     }
