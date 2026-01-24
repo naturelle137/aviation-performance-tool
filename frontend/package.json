@@ -16,13 +16,13 @@
     "dependencies": {
         "@vee-validate/zod": "^4.12.4",
         "axios": "^1.6.5",
-        "chart.js": "^4.4.1",
+        "chart.js": "^4.5.1",
         "pinia": "^2.1.7",
         "primeicons": "^6.0.1",
         "primevue": "^3.48.1",
         "vee-validate": "^4.12.4",
         "vue": "^3.4.15",
-        "vue-chartjs": "^5.3.0",
+        "vue-chartjs": "^5.3.3",
         "vue-router": "^4.2.5",
         "zod": "^3.22.4"
     },
