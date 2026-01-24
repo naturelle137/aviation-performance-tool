@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 from app.models.aircraft import CGEnvelope, FuelType
 from app.schemas.calculation import CGPoint, FuelInput, MassBalanceResponse, WeightInput
+from app.services.cg_validation import CGValidationService
 from app.services.units import Kilogram, Liter, Meter
 
 matplotlib.use("Agg")  # Non-interactive backend for server use
@@ -113,9 +114,18 @@ class MassBalanceService:
             (e for e in self.aircraft.cg_envelopes if e.category == "normal"), None
         )
 
-        to_in_limits = self._point_in_envelope(takeoff_weight, takeoff_arm, envelope)
-        ldg_in_limits = self._point_in_envelope(landing_weight, landing_arm, envelope)
-        zf_in_limits = self._point_in_envelope(zero_fuel_weight, zero_fuel_arm, envelope)
+        res_to = CGValidationService.validate_point(takeoff_weight, takeoff_arm, envelope)
+        res_ldg = CGValidationService.validate_point(landing_weight, landing_arm, envelope)
+        res_zf = CGValidationService.validate_point(zero_fuel_weight, zero_fuel_arm, envelope)
+
+        to_in_limits = res_to.within_limits
+        ldg_in_limits = res_ldg.within_limits
+        zf_in_limits = res_zf.within_limits
+
+        # Collect detailed validation warnings
+        warnings.extend(res_to.warnings if not to_in_limits else [])
+        warnings.extend(res_ldg.warnings if not ldg_in_limits else [])
+        warnings.extend(res_zf.warnings if not zf_in_limits else [])
 
         # H-05 Hazard: Migration check
         if to_in_limits and not ldg_in_limits:
@@ -183,33 +193,6 @@ class MassBalanceService:
             FuelType.DIESEL: 0.84,
         }
         return mapping.get(fuel_type, 0.72)
-
-    def _point_in_envelope(
-        self,
-        weight_kg: float,
-        arm_m: float,
-        envelope: CGEnvelope | None,
-    ) -> bool:
-        """Check if a point is within the CG envelope.
-
-        Args:
-            weight_kg: The weight to check.
-            arm_m: The arm (CG position) to check.
-            envelope: The CG envelope to check against.
-
-        Returns:
-            True if the point is within limits.
-        """
-        if not envelope or not envelope.polygon_points:
-            return True  # No envelope defined, assume OK
-
-        # Use matplotlib's path for point-in-polygon check
-        from matplotlib.path import Path
-
-        polygon = [(p["arm_m"], p["weight_kg"]) for p in envelope.polygon_points]
-        path = Path(polygon)
-
-        return bool(path.contains_point((arm_m, weight_kg)))
 
     def _generate_chart(
         self,
