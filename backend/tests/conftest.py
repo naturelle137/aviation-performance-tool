@@ -59,9 +59,14 @@ def sample_aircraft_data():
         "empty_arm_m": 2.35,
         "mtow_kg": 1157.0,
         "max_landing_weight_kg": 1157.0,
-        "fuel_capacity_l": 200.0,
-        "fuel_arm_m": 2.40,
-        "fuel_density_kg_l": 0.72,
+        "fuel_tanks": [
+            {
+                "name": "Main",
+                "capacity_l": 200.0,
+                "arm_m": 2.40,
+                "fuel_type": "AvGas 100LL"
+            }
+        ],
     }
 
 

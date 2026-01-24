@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.aircraft import Aircraft, CGEnvelope, WeightStation
+from app.models.aircraft import Aircraft, CGEnvelope, FuelTank, WeightStation
 from app.schemas.aircraft import (
     AircraftCreate,
     AircraftResponse,
@@ -54,9 +54,6 @@ async def create_aircraft(
         mtow_kg=aircraft_data.mtow_kg,
         max_landing_weight_kg=aircraft_data.max_landing_weight_kg,
         max_ramp_weight_kg=aircraft_data.max_ramp_weight_kg,
-        fuel_capacity_l=aircraft_data.fuel_capacity_l,
-        fuel_arm_m=aircraft_data.fuel_arm_m,
-        fuel_density_kg_l=aircraft_data.fuel_density_kg_l,
     )
     db.add(aircraft)
     db.commit()
@@ -73,6 +70,19 @@ async def create_aircraft(
             sort_order=idx,
         )
         db.add(station)
+
+    # Add fuel tanks if provided
+    for tank_data in aircraft_data.fuel_tanks or []:
+        tank = FuelTank(
+            aircraft_id=aircraft.id,
+            name=tank_data.name,
+            capacity_l=tank_data.capacity_l,
+            arm_m=tank_data.arm_m,
+            unusable_fuel_l=tank_data.unusable_fuel_l,
+            fuel_type=tank_data.fuel_type,
+            default_quantity_l=tank_data.default_quantity_l,
+        )
+        db.add(tank)
 
     # Add CG envelopes if provided
     for envelope_data in aircraft_data.cg_envelopes or []:

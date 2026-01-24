@@ -1,17 +1,18 @@
-"""Pydantic schemas for Aircraft API."""
-
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.models.aircraft import FuelType
+from app.services.units import Feet, Gallon, Kilogram, Liter, Meter, Pound
 
 
 class WeightStationCreate(BaseModel):
     """Schema for creating a weight station."""
 
     name: str = Field(..., min_length=1, max_length=50, examples=["Pilot"])
-    arm_m: float = Field(..., gt=0, examples=[2.35])
-    max_weight_kg: float | None = Field(None, gt=0, examples=[110.0])
-    default_weight_kg: float | None = Field(None, ge=0, examples=[80.0])
+    arm_m: Meter = Field(..., gt=0, examples=[2.35])
+    max_weight_kg: Kilogram | None = Field(None, gt=0, examples=[110.0])
+    default_weight_kg: Kilogram | None = Field(None, ge=0, examples=[80.0])
 
 
 class WeightStationResponse(WeightStationCreate):
@@ -23,6 +24,25 @@ class WeightStationResponse(WeightStationCreate):
     sort_order: int
 
 
+class FuelTankCreate(BaseModel):
+    """Schema for creating a fuel tank."""
+
+    name: str = Field(..., min_length=1, max_length=50, examples=["Main Tank"])
+    capacity_l: Liter = Field(..., gt=0, examples=[100.0])
+    arm_m: Meter = Field(..., gt=0, examples=[2.40])
+    unusable_fuel_l: Liter = Field(default=0.0, ge=0, examples=[3.8])
+    fuel_type: FuelType = Field(default=FuelType.AVGAS_100LL)
+    default_quantity_l: Liter = Field(default=0.0, ge=0)
+
+
+class FuelTankResponse(FuelTankCreate):
+    """Schema for fuel tank response."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
+
 class CGEnvelopeCreate(BaseModel):
     """Schema for creating a CG envelope."""
 
@@ -30,7 +50,7 @@ class CGEnvelopeCreate(BaseModel):
     polygon_points: list[dict[str, float]] = Field(
         ...,
         min_length=3,
-        examples=[[{"weight_kg": 600, "arm_m": 2.0}, {"weight_kg": 800, "arm_m": 2.1}]],
+        examples=[[{"weight_kg": 600, "arm_m": 2.0}, {"weight_kg": 800, "arm_m": 2.4}]],
     )
 
     @field_validator("polygon_points")
@@ -57,28 +77,28 @@ class AircraftBase(BaseModel):
     """Base schema for aircraft data."""
 
     registration: str = Field(
-        ..., min_length=1, max_length=10, examples=["D-EABC"]
+        ..., 
+        pattern=r"^[A-Z0-9]{2,10}$|^[A-Z0-9]{1,3}-[A-Z0-9]{1,5}$",
+        min_length=3, 
+        max_length=10, 
+        examples=["D-EABC"]
     )
     aircraft_type: str = Field(..., min_length=1, max_length=50, examples=["C172S"])
     manufacturer: str = Field(..., min_length=1, max_length=50, examples=["Cessna"])
 
     # Weight data
-    empty_weight_kg: float = Field(..., gt=0, examples=[743.0])
-    empty_arm_m: float = Field(..., gt=0, examples=[2.35])
-    mtow_kg: float = Field(..., gt=0, examples=[1157.0])
-    max_landing_weight_kg: float | None = Field(None, gt=0, examples=[1157.0])
-    max_ramp_weight_kg: float | None = Field(None, gt=0, examples=[1160.0])
-
-    # Fuel data
-    fuel_capacity_l: float = Field(..., gt=0, examples=[200.0])
-    fuel_arm_m: float = Field(..., gt=0, examples=[2.40])
-    fuel_density_kg_l: float = Field(default=0.72, gt=0, le=1.0)
+    empty_weight_kg: Kilogram = Field(..., gt=0, examples=[743.0])
+    empty_arm_m: Meter = Field(..., gt=0, examples=[2.35])
+    mtow_kg: Kilogram = Field(..., gt=0, examples=[1157.0])
+    max_landing_weight_kg: Kilogram | None = Field(None, gt=0, examples=[1157.0])
+    max_ramp_weight_kg: Kilogram | None = Field(None, gt=0, examples=[1160.0])
 
 
 class AircraftCreate(AircraftBase):
     """Schema for creating an aircraft."""
 
     weight_stations: list[WeightStationCreate] | None = None
+    fuel_tanks: list[FuelTankCreate] | None = None
     cg_envelopes: list[CGEnvelopeCreate] | None = None
 
     @field_validator("registration")
@@ -95,13 +115,11 @@ class AircraftUpdate(BaseModel):
     aircraft_type: str | None = Field(None, min_length=1, max_length=50)
     manufacturer: str | None = Field(None, min_length=1, max_length=50)
     empty_weight_kg: float | None = Field(None, gt=0)
-    empty_arm_m: float | None = Field(None, gt=0)
-    mtow_kg: float | None = Field(None, gt=0)
-    max_landing_weight_kg: float | None = Field(None, gt=0)
-    max_ramp_weight_kg: float | None = Field(None, gt=0)
-    fuel_capacity_l: float | None = Field(None, gt=0)
-    fuel_arm_m: float | None = Field(None, gt=0)
-    fuel_density_kg_l: float | None = Field(None, gt=0, le=1.0)
+    empty_arm_m: Meter | None = Field(None, gt=0)
+    mtow_kg: Kilogram | None = Field(None, gt=0)
+    max_landing_weight_kg: Kilogram | None = Field(None, gt=0)
+    max_ramp_weight_kg: Kilogram | None = Field(None, gt=0)
+    # Fuel data is updated via separate endpoints or nested in Create
 
 
 class AircraftResponse(AircraftBase):
@@ -120,4 +138,5 @@ class AircraftWithDetails(AircraftResponse):
     """Schema for aircraft with all related data."""
 
     weight_stations: list[WeightStationResponse] = []
+    fuel_tanks: list[FuelTankResponse] = []
     cg_envelopes: list[CGEnvelopeResponse] = []

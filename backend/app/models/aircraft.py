@@ -1,12 +1,22 @@
 """Aircraft and related database models."""
 
+import enum
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+
+class FuelType(str, enum.Enum):
+    """Supported fuel types with standard densities."""
+    MOGAS = "MoGas"
+    AVGAS_100LL = "AvGas 100LL"
+    JET_A1 = "Jet A-1"
+    AVGAS_UL91 = "AvGas UL91"
+    DIESEL = "Diesel"
 
 
 class Aircraft(Base):
@@ -28,10 +38,12 @@ class Aircraft(Base):
     max_landing_weight_kg: Mapped[float] = mapped_column(Float, nullable=True)
     max_ramp_weight_kg: Mapped[float] = mapped_column(Float, nullable=True)
 
-    # Fuel data
-    fuel_capacity_l: Mapped[float] = mapped_column(Float, nullable=False)
-    fuel_arm_m: Mapped[float] = mapped_column(Float, nullable=False)
-    fuel_density_kg_l: Mapped[float] = mapped_column(Float, default=0.72)
+    # Relationships (Fuel data moved to FuelTank relationship)
+    fuel_tanks: Mapped[list["FuelTank"]] = relationship(
+        "FuelTank",
+        back_populates="aircraft",
+        cascade="all, delete-orphan",
+    )
 
     # Performance source
     performance_source: Mapped[str] = mapped_column(
@@ -70,6 +82,32 @@ class Aircraft(Base):
 
     def __repr__(self) -> str:
         return f"<Aircraft {self.registration} ({self.aircraft_type})>"
+
+
+class FuelTank(Base):
+    """Fuel tank definition for an aircraft."""
+
+    __tablename__ = "fuel_tanks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    aircraft_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("aircraft.id", ondelete="CASCADE"), nullable=False
+    )
+
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    capacity_l: Mapped[float] = mapped_column(Float, nullable=False)
+    arm_m: Mapped[float] = mapped_column(Float, nullable=False)
+    unusable_fuel_l: Mapped[float] = mapped_column(Float, default=0.0)
+    fuel_type: Mapped[FuelType] = mapped_column(
+        Enum(FuelType), default=FuelType.AVGAS_100LL, nullable=False
+    )
+    default_quantity_l: Mapped[float] = mapped_column(Float, default=0.0)
+
+    # Relationship
+    aircraft: Mapped["Aircraft"] = relationship("Aircraft", back_populates="fuel_tanks")
+
+    def __repr__(self) -> str:
+        return f"<FuelTank {self.name} for {self.aircraft_id}>"
 
 
 class WeightStation(Base):

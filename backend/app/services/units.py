@@ -5,7 +5,9 @@ Mitigates Hazard H-01 (Unit confusion).
 """
 
 import logging
-from typing import TypeVar
+from typing import Any, TypeVar
+
+from pydantic_core import core_schema
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,16 @@ class BaseUnit(float):
         logger.debug("Initializing safety unit %s with value: %s", cls.__name__, value)
 
         return super().__new__(cls, value)  # type: ignore[arg-type]
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: Any
+    ) -> core_schema.CoreSchema:
+        """Allow Pydantic to treat this as a float while preserving the class type."""
+        return core_schema.no_info_after_validator_function(
+            cls,
+            core_schema.float_schema(),
+        )
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({super().__repr__()})"
