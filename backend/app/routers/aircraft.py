@@ -54,6 +54,7 @@ async def create_aircraft(
         mtow_kg=aircraft_data.mtow_kg,
         max_landing_weight_kg=aircraft_data.max_landing_weight_kg,
         max_ramp_weight_kg=aircraft_data.max_ramp_weight_kg,
+        performance_source=aircraft_data.performance_source,
     )
     db.add(aircraft)
     db.commit()

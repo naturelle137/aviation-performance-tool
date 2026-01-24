@@ -92,6 +92,7 @@ class AircraftBase(BaseModel):
     mtow_kg: Kilogram = Field(..., gt=0, examples=[1157.0])
     max_landing_weight_kg: Kilogram | None = Field(None, gt=0, examples=[1157.0])
     max_ramp_weight_kg: Kilogram | None = Field(None, gt=0, examples=[1160.0])
+    performance_source: str = Field(default="manufacturer", examples=["manufacturer", "fsm375"])
 
 
 class AircraftCreate(AircraftBase):
@@ -114,11 +115,12 @@ class AircraftUpdate(BaseModel):
     registration: str | None = Field(None, min_length=1, max_length=10)
     aircraft_type: str | None = Field(None, min_length=1, max_length=50)
     manufacturer: str | None = Field(None, min_length=1, max_length=50)
-    empty_weight_kg: float | None = Field(None, gt=0)
+    empty_weight_kg: Kilogram | None = Field(None, gt=0)
     empty_arm_m: Meter | None = Field(None, gt=0)
     mtow_kg: Kilogram | None = Field(None, gt=0)
     max_landing_weight_kg: Kilogram | None = Field(None, gt=0)
     max_ramp_weight_kg: Kilogram | None = Field(None, gt=0)
+    performance_source: str | None = Field(None, examples=["manufacturer", "fsm375"])
     # Fuel data is updated via separate endpoints or nested in Create
 
 
