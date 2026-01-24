@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 
 from app.models.aircraft import CGEnvelope
 from app.schemas.calculation import CGPoint, MassBalanceResponse, WeightInput
