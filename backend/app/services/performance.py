@@ -173,7 +173,7 @@ class PerformanceService:
         # Altitude factor (approximately 10% per 1000ft)
         altitude_factor = 1 + (pressure_altitude_ft / 1000 * 0.10)
 
-        return base_roll * weight_factor * altitude_factor
+        return float(base_roll * weight_factor * altitude_factor)
 
     def _get_base_landing_roll(
         self,
@@ -198,4 +198,4 @@ class PerformanceService:
         # Altitude affects TAS on approach
         altitude_factor = 1 + (pressure_altitude_ft / 1000 * 0.05)
 
-        return base_roll * weight_factor * altitude_factor
+        return float(base_roll * weight_factor * altitude_factor)
