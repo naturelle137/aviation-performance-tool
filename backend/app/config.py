@@ -41,7 +41,10 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             import json
             try:
-                return json.loads(v)
+                decoded = json.loads(v)
+                if isinstance(decoded, list):
+                    return [str(item) for item in decoded]
+                return [str(decoded)]
             except json.JSONDecodeError:
                 return [origin.strip() for origin in v.split(",")]
         return v

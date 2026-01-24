@@ -16,11 +16,7 @@ class BaseUnit(float):
     def __new__(cls, value: object) -> "BaseUnit":
         if isinstance(value, bool):
             raise TypeError(f"{cls.__name__} cannot be initialized with a boolean")
-        if not isinstance(value, (int, float, BaseUnit)):
-            # float(value) might still work for some types, but we want to be strict
-            # If it's a string, we let float() try to convert it (but our tests check for this)
-            pass
-        return super().__new__(cls, value)
+        return super().__new__(cls, value)  # type: ignore[arg-type]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({super().__repr__()})"
@@ -35,7 +31,7 @@ class Pound(BaseUnit):
     def to_kilograms(self) -> "Kilogram":
         return Kilogram(self / 2.2046226218)
 
-class Liter(BaseBaseUnit := BaseUnit):  # Using a temp name to avoid conflict if any
+class Liter(BaseUnit):
     """Volume in liters."""
     def to_gallons(self) -> "Gallon":
         return Gallon(self * 0.2641720524)
