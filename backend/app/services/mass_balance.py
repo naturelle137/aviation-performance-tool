@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 import matplotlib
 import matplotlib.pyplot as plt
 
-from app.models.aircraft import CGEnvelope
-from app.schemas.calculation import CGPoint, MassBalanceResponse, WeightInput
+from app.models.aircraft import CGEnvelope, FuelType
+from app.schemas.calculation import CGPoint, FuelInput, MassBalanceResponse, WeightInput
+from app.services.units import Kilogram, Liter, Meter
 
 matplotlib.use("Agg")  # Non-interactive backend for server use
 
@@ -27,155 +28,161 @@ class MassBalanceService:
         """
         self.aircraft = aircraft
 
-    def calculate(
+    async def calculate(
         self,
         weight_inputs: list[WeightInput],
-        fuel_liters: float,
-        trip_fuel_liters: float = 0,
+        fuel_inputs: list[FuelInput] | None = None,
+        fuel_liters_legacy: float | None = None,
+        trip_fuel_liters: Liter = Liter(0),
     ) -> MassBalanceResponse:
-        """Calculate mass and balance.
+        """Calculate mass and balance with migration tracking.
 
         Args:
-            weight_inputs: List of weights for each station.
-            fuel_liters: Total fuel in liters.
-            trip_fuel_liters: Fuel to be used during flight.
+            weight_inputs: Weights for each loading station.
+            fuel_inputs: Per-tank fuel loading.
+            fuel_liters_legacy: Legacy single-value fuel input.
+            trip_fuel_liters: Planned fuel burn.
 
         Returns:
-            MassBalanceResponse with calculation results.
+            MassBalanceResponse with details for all flight phases.
         """
         warnings: list[str] = []
 
-        # Calculate fuel weight (Patched for Draft consistency)
-        # TODO: Update to handle per-tank fuel input
-        fuel_density = 0.72  # Default
-        fuel_arm = 0.0
+        # 1. Coordinate Fuel Inputs
+        current_fuel_liters: dict[str, Liter] = {}
+        if fuel_inputs:
+            current_fuel_liters = {f.tank_name: f.fuel_l for f in fuel_inputs}
+        elif fuel_liters_legacy is not None:
+            # Map legacy input to first available tank
+            if self.aircraft.fuel_tanks:
+                name = self.aircraft.fuel_tanks[0].name
+                current_fuel_liters[name] = Liter(fuel_liters_legacy)
 
-        if self.aircraft.fuel_tanks:
-            # For draft consistency, use the first tank's characteristics if available
-            # Standard densities: AvGas=0.72, Diesel=0.84, JetA1=0.84
-            tank = self.aircraft.fuel_tanks[0]
-            fuel_arm = tank.arm_m
-            if "Diesel" in tank.fuel_type.value or "Jet" in tank.fuel_type.value:
-                fuel_density = 0.84
-            else:
-                fuel_density = 0.72
-
-        fuel_weight_kg = fuel_liters * fuel_density
-        trip_fuel_weight_kg = trip_fuel_liters * fuel_density
-        landing_fuel_weight_kg = fuel_weight_kg - trip_fuel_weight_kg
-
-        # Calculate payload
-        payload_kg = sum(w.weight_kg for w in weight_inputs)
-
-        # Calculate takeoff weight
-        takeoff_weight_kg = (
-            self.aircraft.empty_weight_kg + payload_kg + fuel_weight_kg
+        # 2. Calculate State: ZERO FUEL
+        payload_kg = Kilogram(sum(w.weight_kg for w in weight_inputs))
+        payload_moment = sum(
+            w.weight_kg * self._get_station_arm(w.station_name) for w in weight_inputs
         )
 
-        # Calculate landing weight
-        landing_weight_kg = takeoff_weight_kg - trip_fuel_weight_kg
+        zero_fuel_weight = Kilogram(self.aircraft.empty_weight_kg + payload_kg)
+        zero_fuel_moment = (
+            self.aircraft.empty_weight_kg * self.aircraft.empty_arm_m
+        ) + payload_moment
+        zero_fuel_arm = Meter(
+            zero_fuel_moment / zero_fuel_weight if zero_fuel_weight > 0 else 0
+        )
 
-        # Calculate moments
-        empty_moment = self.aircraft.empty_weight_kg * self.aircraft.empty_arm_m
-        fuel_moment = fuel_weight_kg * fuel_arm
-        landing_fuel_moment = landing_fuel_weight_kg * fuel_arm
+        # 3. Calculate State: TAKEOFF (T/O)
+        takeoff_fuel_mass = Kilogram(0)
+        takeoff_fuel_moment = 0.0
 
-        # Calculate payload moment (match inputs to weight stations)
-        payload_moment = 0.0
-        station_map = {s.name: s for s in self.aircraft.weight_stations}
+        for tank in self.aircraft.fuel_tanks:
+            qty = current_fuel_liters.get(tank.name, Liter(0))
+            density = self._get_fuel_density(tank.fuel_type)
+            mass = Kilogram(qty * density)
+            takeoff_fuel_mass = Kilogram(takeoff_fuel_mass + mass)
+            takeoff_fuel_moment += mass * tank.arm_m
 
-        for weight_input in weight_inputs:
-            station = station_map.get(weight_input.station_name)
-            if station:
-                payload_moment += weight_input.weight_kg * station.arm_m
+        takeoff_weight = Kilogram(zero_fuel_weight + takeoff_fuel_mass)
+        takeoff_moment = zero_fuel_moment + takeoff_fuel_moment
+        takeoff_arm = Meter(takeoff_moment / takeoff_weight if takeoff_weight > 0 else 0)
 
-                # Check max weight per station
-                if station.max_weight_kg and weight_input.weight_kg > station.max_weight_kg:
-                    warnings.append(
-                        f"Weight at {station.name} ({weight_input.weight_kg} kg) "
-                        f"exceeds maximum ({station.max_weight_kg} kg)"
-                    )
-            else:
-                warnings.append(f"Unknown weight station: {weight_input.station_name}")
+        # 4. Calculate State: LANDING (Burn)
+        # Sequential burn logic: Burn from last tank to first for simplicity
+        remaining_burn = trip_fuel_liters
+        landing_fuel_mass = Kilogram(0)
+        landing_fuel_moment = 0.0
 
-        # Calculate CG positions
-        total_takeoff_moment = empty_moment + payload_moment + fuel_moment
-        takeoff_arm = total_takeoff_moment / takeoff_weight_kg if takeoff_weight_kg > 0 else 0
+        for tank in reversed(self.aircraft.fuel_tanks):
+            qty = current_fuel_liters.get(tank.name, Liter(0))
+            burn_from_this_tank = min(qty, remaining_burn)
+            landing_qty = Liter(qty - burn_from_this_tank)
+            remaining_burn = Liter(remaining_burn - burn_from_this_tank)
 
-        total_landing_moment = empty_moment + payload_moment + landing_fuel_moment
-        landing_arm = total_landing_moment / landing_weight_kg if landing_weight_kg > 0 else 0
+            density = self._get_fuel_density(tank.fuel_type)
+            mass = Kilogram(landing_qty * density)
+            landing_fuel_mass = Kilogram(landing_fuel_mass + mass)
+            landing_fuel_moment += mass * tank.arm_m
 
-        # Check weight limits
-        within_weight_limits = True
-        if takeoff_weight_kg > self.aircraft.mtow_kg:
+        landing_weight = Kilogram(zero_fuel_weight + landing_fuel_mass)
+        landing_moment = zero_fuel_moment + landing_fuel_moment
+        landing_arm = Meter(landing_moment / landing_weight if landing_weight > 0 else 0)
+
+        # 5. Validation & Hazards
+        envelope = next(
+            (e for e in self.aircraft.cg_envelopes if e.category == "normal"), None
+        )
+
+        to_in_limits = self._point_in_envelope(takeoff_weight, takeoff_arm, envelope)
+        ldg_in_limits = self._point_in_envelope(landing_weight, landing_arm, envelope)
+        zf_in_limits = self._point_in_envelope(zero_fuel_weight, zero_fuel_arm, envelope)
+
+        # H-05 Hazard: Migration check
+        if to_in_limits and not ldg_in_limits:
             warnings.append(
-                f"Takeoff weight ({takeoff_weight_kg:.1f} kg) exceeds MTOW ({self.aircraft.mtow_kg:.1f} kg)"
+                "CRITICAL: CG shifts OUT OF LIMITS during flight (Landing state unsafe)."
             )
-            within_weight_limits = False
 
-        if self.aircraft.max_landing_weight_kg:
-            if landing_weight_kg > self.aircraft.max_landing_weight_kg:
-                warnings.append(
-                    f"Landing weight ({landing_weight_kg:.1f} kg) exceeds MLW "
-                    f"({self.aircraft.max_landing_weight_kg:.1f} kg)"
-                )
-                within_weight_limits = False
+        if takeoff_weight > self.aircraft.mtow_kg:
+            warnings.append(
+                f"Takeoff weight {takeoff_weight:.1f}kg exceeds MTOW {self.aircraft.mtow_kg:.1f}kg"
+            )
 
-        # Check CG limits
-        within_cg_limits = True
-        normal_envelope = next(
-            (e for e in self.aircraft.cg_envelopes if e.category == "normal"),
-            None,
-        )
-
-        takeoff_in_limits = self._point_in_envelope(
-            takeoff_weight_kg, takeoff_arm, normal_envelope
-        )
-        landing_in_limits = self._point_in_envelope(
-            landing_weight_kg, landing_arm, normal_envelope
-        )
-
-        if not takeoff_in_limits:
-            warnings.append("Takeoff CG is outside the envelope limits")
-            within_cg_limits = False
-
-        if not landing_in_limits:
-            warnings.append("Landing CG is outside the envelope limits")
-            within_cg_limits = False
-
-        # Create CG points
+        # 6. Response Assembly
         cg_points = [
             CGPoint(
+                label="Zero Fuel",
+                weight_kg=zero_fuel_weight,
+                arm_m=zero_fuel_arm,
+                moment_kg_m=zero_fuel_moment,
+                within_limits=zf_in_limits,
+            ),
+            CGPoint(
                 label="Takeoff",
-                weight_kg=round(takeoff_weight_kg, 1),
-                arm_m=round(takeoff_arm, 3),
-                moment_kg_m=round(total_takeoff_moment, 1),
-                within_limits=takeoff_in_limits,
+                weight_kg=takeoff_weight,
+                arm_m=takeoff_arm,
+                moment_kg_m=takeoff_moment,
+                within_limits=to_in_limits,
             ),
             CGPoint(
                 label="Landing",
-                weight_kg=round(landing_weight_kg, 1),
-                arm_m=round(landing_arm, 3),
-                moment_kg_m=round(total_landing_moment, 1),
-                within_limits=landing_in_limits,
+                weight_kg=landing_weight,
+                arm_m=landing_arm,
+                moment_kg_m=landing_moment,
+                within_limits=ldg_in_limits,
             ),
         ]
 
-        # Generate chart
-        chart_base64 = self._generate_chart(cg_points, normal_envelope)
-
         return MassBalanceResponse(
-            empty_weight_kg=round(self.aircraft.empty_weight_kg, 1),
-            payload_kg=round(payload_kg, 1),
-            fuel_weight_kg=round(fuel_weight_kg, 1),
-            takeoff_weight_kg=round(takeoff_weight_kg, 1),
-            landing_weight_kg=round(landing_weight_kg, 1),
+            empty_weight_kg=Kilogram(self.aircraft.empty_weight_kg),
+            payload_kg=payload_kg,
+            fuel_weight_kg=takeoff_fuel_mass,
+            takeoff_weight_kg=takeoff_weight,
+            landing_weight_kg=landing_weight,
+            zero_fuel_weight_kg=zero_fuel_weight,
             cg_points=cg_points,
-            within_weight_limits=within_weight_limits,
-            within_cg_limits=within_cg_limits,
+            within_weight_limits=(takeoff_weight <= self.aircraft.mtow_kg),
+            within_cg_limits=(to_in_limits and ldg_in_limits),
             warnings=warnings,
-            chart_image_base64=chart_base64,
+            chart_image_base64=self._generate_chart(cg_points, envelope),
         )
+
+    def _get_station_arm(self, name: str) -> Meter:
+        for s in self.aircraft.weight_stations:
+            if s.name == name:
+                return Meter(s.arm_m)
+        return Meter(0)
+
+    def _get_fuel_density(self, fuel_type: FuelType) -> float:
+        """Map fuel type to standard density (kg/L)."""
+        mapping = {
+            FuelType.AVGAS_100LL: 0.72,
+            FuelType.AVGAS_UL91: 0.71,
+            FuelType.MOGAS: 0.72,
+            FuelType.JET_A1: 0.84,
+            FuelType.DIESEL: 0.84,
+        }
+        return mapping.get(fuel_type, 0.72)
 
     def _point_in_envelope(
         self,
@@ -199,9 +206,7 @@ class MassBalanceService:
         # Use matplotlib's path for point-in-polygon check
         from matplotlib.path import Path
 
-        polygon = [
-            (p["arm_m"], p["weight_kg"]) for p in envelope.polygon_points
-        ]
+        polygon = [(p["arm_m"], p["weight_kg"]) for p in envelope.polygon_points]
         path = Path(polygon)
 
         return bool(path.contains_point((arm_m, weight_kg)))
@@ -261,7 +266,7 @@ class MassBalanceService:
 
             # Add reference lines
             ax.axhline(
-                y=self.aircraft.mtow_kg,
+                y=float(self.aircraft.mtow_kg),
                 color="red",
                 linestyle=":",
                 alpha=0.5,
