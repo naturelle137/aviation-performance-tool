@@ -1,3 +1,6 @@
+import { describe, it, expect, vi } from 'vitest'
+import { mount } from '@vue/test-utils'
+import CGEnvelopeChart from '../CGEnvelopeChart.vue'
 import type { CGEnvelope, CGPoint } from '@/types'
 
 // Mock Chart.js to prevent canvas errors in jsdom
