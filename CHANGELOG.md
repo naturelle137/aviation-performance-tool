@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `changelog-check` CI job to enforce documentation updates in PRs
 - Implemented Aircraft data model (REQ-AD-01, REQ-AD-02) including fuel tanks and weight stations
 - Implemented Fuel Density Map (REQ-FE-01) supporting AvGas, Jet-A1, Mogas types (Mitigates H-02)
 - Implemented Unit Conversion Service (REQ-SYS-03) handling hybrid Imperial/Metric inputs

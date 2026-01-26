@@ -32,6 +32,42 @@ jobs:
               - 'frontend/**'
               - '.github/workflows/ci.yml'
 
+
+  # Changelog Verification
+  changelog-check:
+    name: Changelog Verification
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for Changelog modifications
+        run: |
+          # Get the list of changed files
+          changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          # Check if CHANGELOG.md is in the list
+          if echo "$changed_files" | grep -q "CHANGELOG.md"; then
+            echo "✅ CHANGELOG.md has been modified."
+            exit 0
+          fi
+
+          # Check recent commit messages for chore/refactor exemption
+          # If purely chore/refactor, skip check.
+          # If feat/fix/safety present, FAIL.
+          commit_msgs=$(git log --format=%s origin/${{ github.base_ref }}...HEAD)
+          
+          if echo "$commit_msgs" | grep -Eq "^(feat|fix|safety)"; then
+             echo "❌ Feature/Fix/Safety commits detected but NO Changelog update!"
+             echo "Please update CHANGELOG.md under [Unreleased]."
+             exit 1
+          fi
+          
+          echo "ℹ️ Only chore/refactor (maintenance) detected. Changelog update optional."
+          exit 0
+
   # Backend Tests
   backend-test:
     name: Backend Tests
