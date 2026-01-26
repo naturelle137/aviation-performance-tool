@@ -5,13 +5,22 @@ echo "--------------------------------------------------------"
 echo "Quality Gate 1: Pre-Push Verification"
 echo "--------------------------------------------------------"
 
-# 1. Frontend Lint
-echo "1. Running Frontend Linting..."
+# 1. Frontend Checks
+echo "1. Running Frontend Checks..."
 cd frontend || exit 1
+
+echo "   --> Linting..."
 if ! npm run lint; then
   echo "❌ Frontend lint failed. Push aborted."
   exit 1
 fi
+
+echo "   --> Type Checking..."
+if ! npm run type-check; then
+  echo "❌ Frontend type check failed. Push aborted."
+  exit 1
+fi
+
 cd ..
 
 # 2. Backend Lint (Ruff)

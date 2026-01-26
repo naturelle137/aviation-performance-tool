@@ -115,6 +115,7 @@ Before pushing, the following checks runs automatically via `.husky/pre-push`:
 1.  **Code Compilation**: Compilation flow checks.
 2.  **Linting**:
     *   Frontend: `npm run lint`
+    *   Frontend Type Check: `npm run type-check`
     *   Backend: `ruff check` (if python files present)
 3.  **Tests**:
     *   Frontend: `npm run test:unit`

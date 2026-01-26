@@ -26,7 +26,6 @@ describe('CGEnvelopeChart', () => {
     ]
 
     it('renders without crashing', () => {
-        // @ts-expect-error - Mocking complex Chart.js props
         const wrapper = mount(CGEnvelopeChart, {
             props: {
                 envelope: mockEnvelope,
@@ -38,7 +37,6 @@ describe('CGEnvelopeChart', () => {
 
     it('processes polygon points correctly', () => {
         // Access component instance to check computed properties
-        // @ts-expect-error - Accessing internal VM for testing
         const wrapper = mount(CGEnvelopeChart, {
             props: {
                 envelope: mockEnvelope,
