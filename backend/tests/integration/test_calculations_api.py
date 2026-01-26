@@ -5,6 +5,7 @@ import pytest
 from app.models.aircraft import Aircraft, CGEnvelope, FuelTank, WeightStation
 
 
+@pytest.mark.mvp
 class TestCalculationAPI:
 
     @pytest.fixture

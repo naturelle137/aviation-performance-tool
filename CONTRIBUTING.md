@@ -118,8 +118,8 @@ Before pushing, the following checks runs automatically via `.husky/pre-push`:
     *   Frontend Type Check: `npm run type-check`
     *   Backend: `ruff check` (if python files present)
 3.  **Tests**:
-    *   Frontend: `npm run test:unit`
-    *   Backend: `pytest`
+    *   Frontend: `npm run test:coverage` (Threshold: 75%+)
+    *   Backend: `pytest -m mvp --cov-fail-under=90` (Strict 90% coverage for MVP)
 
 **Setup:**
 Run `npm install` in the root directory to activate hooks.

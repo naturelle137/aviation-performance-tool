@@ -47,9 +47,9 @@ fi
 echo "3. Running Tests..."
 
 # Frontend Tests
-echo "   --> Frontend Unit Tests..."
+echo "   --> Frontend Tests with Coverage..."
 cd frontend || exit 1
-if ! npm run test:unit; then
+if ! npm run test:coverage; then
   echo "❌ Frontend tests failed. Push aborted."
   exit 1
 fi
@@ -60,12 +60,12 @@ if [ -d "backend" ]; then
     echo "   --> Backend Tests..."
     cd backend || exit 1
     if [ -f ".venv/Scripts/python" ]; then
-        if ! .venv/Scripts/python -m pytest; then
+        if ! .venv/Scripts/python -m pytest -m mvp --cov=app --cov-fail-under=90; then
             echo "❌ Backend tests failed. Push aborted."
             exit 1
         fi
     else
-        if ! pytest; then
+        if ! pytest -m mvp --cov=app --cov-fail-under=90; then
              echo "❌ Backend tests failed. Push aborted."
              exit 1
         fi
