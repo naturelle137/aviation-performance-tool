@@ -1,0 +1,35 @@
+husky - DEPRECATED
+
+Please remove the following two lines from .husky/pre-commit:
+
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+They WILL FAIL in v10.0.0
+
+[STARTED] Backing up original state...
+[COMPLETED] Backed up original state in git stash (8a5e519)
+[STARTED] Running tasks for staged files...
+[STARTED] package.json ΓÇö 13 files
+[STARTED] frontend/**/*.{js,ts,vue} ΓÇö 3 files
+[STARTED] backend/**/*.py ΓÇö 2 files
+[STARTED] cd frontend && npm run lint
+[STARTED] cd backend && .venv/Scripts/python -m ruff check --fix
+[FAILED] cd frontend && npm run lint [FAILED]
+[FAILED] cd frontend && npm run lint [FAILED]
+[COMPLETED] Running tasks for staged files...
+[STARTED] Applying modifications from tasks...
+[SKIPPED] Skipped because of errors from tasks.
+[STARTED] Reverting to original state because of errors...
+[FAILED] cd backend && .venv/Scripts/python -m ruff check --fix [FAILED]
+[FAILED] cd backend && .venv/Scripts/python -m ruff check --fix [FAILED]
+[COMPLETED] Reverting to original state because of errors...
+[STARTED] Cleaning up temporary files...
+[COMPLETED] Cleaning up temporary files...
+
+Γ£û cd frontend && npm run lint:
+The filename, directory name, or volume label syntax is incorrect.
+
+Γ£û cd backend && .venv/Scripts/python -m ruff check --fix:
+The filename, directory name, or volume label syntax is incorrect.
+husky - pre-commit script failed (code 1)

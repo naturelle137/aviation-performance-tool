@@ -1,0 +1,36 @@
+husky - DEPRECATED
+
+Please remove the following two lines from .husky/pre-commit:
+
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+They WILL FAIL in v10.0.0
+
+[STARTED] Backing up original state...
+[COMPLETED] Backed up original state in git stash (602d94c)
+[STARTED] Running tasks for staged files...
+[STARTED] package.json ΓÇö 15 files
+[STARTED] frontend/**/*.{js,ts,vue} ΓÇö 3 files
+[STARTED] backend/**/*.py ΓÇö 2 files
+[STARTED] npm run lint --prefix frontend
+[STARTED] .venv\Scripts\python -m ruff check --config backend/pyproject.toml --fix
+[FAILED] .venv\Scripts\python -m ruff check --config backend/pyproject.toml --fix [FAILED]
+[FAILED] .venv\Scripts\python -m ruff check --config backend/pyproject.toml --fix [FAILED]
+[COMPLETED] Running tasks for staged files...
+[STARTED] Applying modifications from tasks...
+[SKIPPED] Skipped because of errors from tasks.
+[STARTED] Reverting to original state because of errors...
+[FAILED] npm run lint --prefix frontend [SIGKILL]
+[FAILED] npm run lint --prefix frontend [SIGKILL]
+[COMPLETED] Reverting to original state because of errors...
+[STARTED] Cleaning up temporary files...
+[COMPLETED] Cleaning up temporary files...
+
+Γ£û .venv\Scripts\python -m ruff check --config backend/pyproject.toml --fix:
+The system cannot find the path specified.
+
+Γ£û npm run lint --prefix frontend failed to spawn:
+Command was terminated with SIGKILL: npm run lint --prefix frontend 'D:/dev/aviation-performance-tool/frontend/src/components/LoadingStation.vue' 'D:/dev/aviation-performance-tool/frontend/src/components/charts/CGEnvelopeChart.vue' 'D:/dev/aviation-performance-tool/frontend/src/views/CalculationView.vue'
+undefined
+husky - pre-commit script failed (code 1)

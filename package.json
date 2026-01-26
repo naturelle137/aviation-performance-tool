@@ -12,6 +12,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "frontend/**/*.{js,ts,vue}": [
+      "npm run lint --prefix frontend"
+    ],
+    "backend/**/*.py": [
+      "backend\\.venv\\Scripts\\python -m ruff check --config backend/pyproject.toml --fix"
+    ]
   }
 }

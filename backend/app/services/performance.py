@@ -12,9 +12,10 @@ if TYPE_CHECKING:
 class PerformanceService:
     """Service for takeoff and landing performance calculations.
 
-    Implements dual-mode logic:
-    - Mode A: Linear interpolation for POH/AFM data tables.
-    - Mode B: FSM 3/75 correction factor engine.
+    Implements:
+        - REQ-PF-01: Calculate Takeoff Distance (TODR).
+        - REQ-PF-02: Support Mode A (Tables) and Mode B (FSM 3/75).
+        - REQ-PF-18: FSM 3/75 correction factors.
     """
 
     # ISA standard conditions

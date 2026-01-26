@@ -44,6 +44,7 @@ packages = ["app"]
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+exclude = ["src/archive"]
 
 [tool.ruff.lint]
 select = [
@@ -86,6 +87,7 @@ addopts = "-v --cov=app --cov-report=term-missing"
 [tool.coverage.run]
 source = ["app"]
 branch = true
+omit = ["src/archive/*"]
 
 [tool.coverage.report]
 exclude_lines = [

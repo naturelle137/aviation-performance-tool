@@ -1,4 +1,11 @@
 <script setup lang="ts">
+/**
+ * Main Calculation View.
+ * Implements:
+ * - REQ-MB-01: Mass & Balance calculation workflow.
+ * - REQ-MB-02: Display CG envelope chart.
+ * - REQ-PF-01: Performance calculation workflow.
+ */
 import { ref, computed, onMounted } from 'vue'
 import { useAircraftStore, useCalculationStore } from '@/stores'
 import { useToast } from 'primevue/usetoast'

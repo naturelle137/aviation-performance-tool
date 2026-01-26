@@ -1,5 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Pre-commit checks can be added here.
-# Currently enforced on pre-push.
+npx lint-staged

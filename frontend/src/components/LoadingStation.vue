@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Single station weight input component.
+ * Implements:
+ * - REQ-UI-10: Immediate visual feedback (limits).
+ * - REQ-UI-11: Numeric inputs constraints.
+ */
 import InputNumber from 'primevue/inputnumber'
 import type { WeightStation } from '@/types'
 

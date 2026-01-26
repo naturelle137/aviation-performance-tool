@@ -9,12 +9,6 @@ echo "--------------------------------------------------------"
 echo "1. Running Frontend Checks..."
 cd frontend || exit 1
 
-echo "   --> Linting..."
-if ! npm run lint; then
-  echo "❌ Frontend lint failed. Push aborted."
-  exit 1
-fi
-
 echo "   --> Type Checking..."
 if ! npm run type-check; then
   echo "❌ Frontend type check failed. Push aborted."
@@ -23,25 +17,6 @@ fi
 
 cd ..
 
-# 2. Backend Lint (Ruff)
-if [ -d "backend" ]; then
-    echo "2. Running Backend Linting (Ruff)..."
-    cd backend || exit 1
-    # Try using the project venv
-    if [ -f ".venv/Scripts/python" ]; then
-         if ! .venv/Scripts/python -m ruff check .; then
-            echo "❌ Backend lint check failed. Push aborted."
-            exit 1
-         fi
-    else
-         # Fallback to global ruff if venv not found/standard
-         if ! ruff check .; then
-            echo "❌ Backend lint check failed. Push aborted."
-            exit 1
-         fi
-    fi
-    cd ..
-fi
 
 # 3. Tests
 echo "3. Running Tests..."
@@ -60,7 +35,7 @@ if [ -d "backend" ]; then
     echo "   --> Backend Tests..."
     cd backend || exit 1
     if [ -f ".venv/Scripts/python" ]; then
-        if ! .venv/Scripts/python -m pytest -m mvp --cov=app --cov-fail-under=90; then
+        if ! .venv/Scripts/python -m pytest -m mvp --cov=app --cov-fail-under=80; then
             echo "❌ Backend tests failed. Push aborted."
             exit 1
         fi

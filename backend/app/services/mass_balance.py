@@ -19,7 +19,13 @@ if TYPE_CHECKING:
 
 
 class MassBalanceService:
-    """Service for mass and balance calculations."""
+    """Service for mass and balance calculations.
+
+    Implements:
+        - REQ-MB-01: Calculate Total Weight and CG.
+        - REQ-MB-07: Calculate CG for Takeoff and Landing (migration).
+        - REQ-MB-10: Detect CG migration out of limits.
+    """
 
     def __init__(self, aircraft: "Aircraft") -> None:
         """Initialize with aircraft data.
@@ -184,7 +190,10 @@ class MassBalanceService:
         return Meter(0)
 
     def _get_fuel_density(self, fuel_type: FuelType) -> float:
-        """Map fuel type to standard density (kg/L)."""
+        """Map fuel type to standard density (kg/L).
+
+        Implements: REQ-FE-01
+        """
         mapping = {
             FuelType.AVGAS_100LL: 0.72,
             FuelType.AVGAS_UL91: 0.71,

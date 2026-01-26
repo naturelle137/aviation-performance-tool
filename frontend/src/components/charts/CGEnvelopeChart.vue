@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Interactive CG Envelope Chart.
+ * Implements:
+ * - REQ-MB-02: Real-time CG envelope display.
+ * - REQ-MB-09: Render dynamic CG points and limits.
+ */
 import { computed } from 'vue'
 import {
   Chart as ChartJS,
