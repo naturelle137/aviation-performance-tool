@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Main App Layout.
+ * Implements:
+ * - REQ-UI-01: Navigation structure.
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Menubar from 'primevue/menubar'

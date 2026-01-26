@@ -1,0 +1,15 @@
+husky - DEPRECATED
+
+Please remove the following two lines from .husky/pre-commit:
+
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+They WILL FAIL in v10.0.0
+
+ΓåÆ lint-staged could not find any staged files matching configured tasks.
+[maintenance/traceability-and-ci-guard e5e9d7d] chore(ci): add changelog guard and enforce traceability [REQ-CORE-01]
+ 5 files changed, 181 insertions(+)
+ create mode 100644 .git_add_log_5.txt
+ create mode 100644 .git_commit_log_4.txt
+ create mode 100644 .git_push_log_4.txt
