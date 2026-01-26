@@ -1,0 +1,17 @@
+{
+  "name": "aviation-performance-tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "cd frontend && npm run lint",
+    "test": "cd frontend && npm run test:unit && cd ../backend && .venv/Scripts/python -m pytest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

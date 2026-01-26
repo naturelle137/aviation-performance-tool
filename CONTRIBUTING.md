@@ -110,11 +110,20 @@ Migration script provided in scripts/migrate-v2.py"
 ## ✅ Quality Gates
 
 ### Gate 1: Local Development
-Before pushing, ensure:
-- [ ] Code compiles without errors
-- [ ] Linting passes (`npm run lint` / `ruff check`)
-- [ ] Unit tests pass locally
-- [ ] Commit messages follow Conventional Commits
+**Enforced by Git Hooks (Husky)**
+Before pushing, the following checks runs automatically via `.husky/pre-push`:
+1.  **Code Compilation**: Compilation flow checks.
+2.  **Linting**:
+    *   Frontend: `npm run lint`
+    *   Backend: `ruff check` (if python files present)
+3.  **Tests**:
+    *   Frontend: `npm run test:unit`
+    *   Backend: `pytest`
+
+**Setup:**
+Run `npm install` in the root directory to activate hooks.
+
+**IMPORTANT:** Using `git push --no-verify` to bypass these checks is **strictly prohibited**. Broken quality gates must be fixed locally before pushing.
 
 ### Gate 2: Pull Request
 Required for merge to `develop`:

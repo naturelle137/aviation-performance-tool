@@ -1,0 +1,67 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "--------------------------------------------------------"
+echo "Quality Gate 1: Pre-Push Verification"
+echo "--------------------------------------------------------"
+
+# 1. Frontend Lint
+echo "1. Running Frontend Linting..."
+cd frontend || exit 1
+if ! npm run lint; then
+  echo "❌ Frontend lint failed. Push aborted."
+  exit 1
+fi
+cd ..
+
+# 2. Backend Lint (Ruff)
+if [ -d "backend" ]; then
+    echo "2. Running Backend Linting (Ruff)..."
+    cd backend || exit 1
+    # Try using the project venv
+    if [ -f ".venv/Scripts/python" ]; then
+         if ! .venv/Scripts/python -m ruff check .; then
+            echo "❌ Backend lint check failed. Push aborted."
+            exit 1
+         fi
+    else
+         # Fallback to global ruff if venv not found/standard
+         if ! ruff check .; then
+            echo "❌ Backend lint check failed. Push aborted."
+            exit 1
+         fi
+    fi
+    cd ..
+fi
+
+# 3. Tests
+echo "3. Running Tests..."
+
+# Frontend Tests
+echo "   --> Frontend Unit Tests..."
+cd frontend || exit 1
+if ! npm run test:unit; then
+  echo "❌ Frontend tests failed. Push aborted."
+  exit 1
+fi
+cd ..
+
+# Backend Tests
+if [ -d "backend" ]; then
+    echo "   --> Backend Tests..."
+    cd backend || exit 1
+    if [ -f ".venv/Scripts/python" ]; then
+        if ! .venv/Scripts/python -m pytest; then
+            echo "❌ Backend tests failed. Push aborted."
+            exit 1
+        fi
+    else
+        if ! pytest; then
+             echo "❌ Backend tests failed. Push aborted."
+             exit 1
+        fi
+    fi
+    cd ..
+fi
+
+echo "✅ All Quality Gate checks passed. Pushing..."
