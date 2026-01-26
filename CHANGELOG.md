@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Priority system (P1-P3) for requirements
 
 ### Changed
+- Harmonized testing thresholds in `TESTING.md` and `CONTRIBUTING.md` (P1 coverage raised to 90%, Unit Conversion to 95%)
+- Updated pre-push hooks to enforce `pytest -m p1`
 - Updated .gitignore to exclude internal scripts
 
 ### Security

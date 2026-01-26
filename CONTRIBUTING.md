@@ -118,8 +118,8 @@ Before pushing, the following checks runs automatically via `.husky/pre-push`:
     *   Frontend Type Check: `npm run type-check`
     *   Backend: `ruff check` (if python files present)
 3.  **Tests**:
-    *   Frontend: `npm run test:coverage` (Threshold: 75%+)
-    *   Backend: `pytest -m mvp --cov-fail-under=90` (Strict 90% coverage for MVP)
+    *   Frontend: `npm run test:coverage` (Threshold: 75% Global, **90% for P1 Components**)
+    *   Backend: `pytest -m p1 --cov-fail-under=90` (Strict 90% coverage for P1/Safety)
 
 **Setup:**
 Run `npm install` in the root directory to activate hooks.
@@ -135,7 +135,7 @@ Required for merge to `develop`:
 
 ### Gate 3: Release Branch
 Required for merge to `main`:
-- [ ] All unit tests pass (>80% coverage for P1 requirements)
+- [ ] All unit tests pass (>90% coverage for P1 requirements)
 - [ ] Integration tests pass
 - [ ] Safety-critical tests pass (H-01 through H-14)
 - [ ] Documentation updated
