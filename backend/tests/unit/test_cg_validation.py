@@ -1,9 +1,11 @@
 """Unit tests for the CG Validation Service."""
 
 import pytest
-from app.services.cg_validation import CGValidationService
+
 from app.models.aircraft import CGEnvelope
+from app.services.cg_validation import CGValidationService
 from app.services.units import Kilogram, Meter
+
 
 @pytest.fixture
 def sample_envelope():
@@ -90,7 +92,7 @@ def test_validate_no_envelope():
 @pytest.mark.safety
 def test_sloped_boundary_validation():
     """Verify validation on a non-rectangular sloped boundary.
-    
+
     AFM Example: Front limit moves aft as weight increases.
     800kg @ 2.20m to 1200kg @ 2.30m
     """
@@ -103,13 +105,13 @@ def test_sloped_boundary_validation():
             {"weight_kg": 800, "arm_m": 2.50},
         ]
     )
-    
-    # Mid-weight point (1000kg). 
+
+    # Mid-weight point (1000kg).
     # Sloped limit at 1000kg is exactly 2.25m.
-    
+
     # 1. Inside
     assert CGValidationService.validate_point(Kilogram(1000), Meter(2.26), sloped_envelope).within_limits is True
-    
+
     # 2. Outside (but within the min/max arm of the WHOLE polygon)
     # This tests that we don't just use a simple bounding box.
     res = CGValidationService.validate_point(Kilogram(1000), Meter(2.24), sloped_envelope)

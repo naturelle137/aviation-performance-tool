@@ -6,14 +6,16 @@ Implements REQ-SYS-03, REQ-UQ-04, REQ-AC-13.
 """
 
 import pytest
-from app.services.units import Kilogram, Pound, Liter, Gallon, Meter, Feet
+
+from app.services.units import Feet, Gallon, Kilogram, Liter, Meter, Pound
+
 
 @pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_kg_to_lb_conversion():
     """Verify kg to lb conversion logic.
-    
+
     Traceability: REQ-AC-13, H-01
     """
     kg = Kilogram(100)
@@ -26,7 +28,7 @@ def test_kg_to_lb_conversion():
 @pytest.mark.safety
 def test_lb_to_kg_conversion():
     """Verify lb to kg conversion logic.
-    
+
     Traceability: REQ-AC-13, H-01
     """
     lb = Pound(220.462)
@@ -39,7 +41,7 @@ def test_lb_to_kg_conversion():
 @pytest.mark.safety
 def test_liter_to_gallon_conversion():
     """Verify liter to gallon conversion logic.
-    
+
     Traceability: REQ-AC-13, H-01
     """
     liter = Liter(100)
@@ -52,7 +54,7 @@ def test_liter_to_gallon_conversion():
 @pytest.mark.safety
 def test_gallon_to_liter_conversion():
     """Verify gallon to liter conversion logic.
-    
+
     Traceability: REQ-AC-13, H-01
     """
     gallon = Gallon(26.417)
@@ -65,7 +67,7 @@ def test_gallon_to_liter_conversion():
 @pytest.mark.safety
 def test_meter_to_feet_conversion():
     """Verify meter to feet conversion logic.
-    
+
     Traceability: REQ-AC-13, H-01
     """
     meter = Meter(10)
@@ -78,7 +80,7 @@ def test_meter_to_feet_conversion():
 @pytest.mark.safety
 def test_feet_to_meter_conversion():
     """Verify feet to meter conversion logic.
-    
+
     Traceability: REQ-AC-13, H-01
     """
     feet = Feet(32.808)
@@ -91,7 +93,7 @@ def test_feet_to_meter_conversion():
 @pytest.mark.safety
 def test_branded_type_inheritance():
     """Ensure branded types behave like floats.
-    
+
     Traceability: REQ-UQ-04
     """
     kg = Kilogram(10)
@@ -99,7 +101,7 @@ def test_branded_type_inheritance():
     assert result == 20
     # Operations with floats return floats in Python inheritance
     assert not isinstance(result, Kilogram)
-    
+
     # Re-branding is explicit
     rebranded = Kilogram(result)
     assert isinstance(rebranded, Kilogram)
@@ -109,17 +111,17 @@ def test_branded_type_inheritance():
 @pytest.mark.safety
 def test_invalid_types_initialization():
     """Verify behavior with invalid input types.
-    
+
     Traceability: REQ-SYS-03, H-01
     """
     # String input should raise ValueError (inherited from float)
     with pytest.raises(ValueError):
         Kilogram("abc")
-    
+
     # None input should raise TypeError (inherited from float)
     with pytest.raises(TypeError):
         Kilogram(None)
-    
+
     # Boolean input should raise TypeError (safety mitigation)
     with pytest.raises(TypeError) as excinfo:
         Kilogram(True)

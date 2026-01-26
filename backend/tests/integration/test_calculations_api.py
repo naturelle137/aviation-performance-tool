@@ -1,11 +1,12 @@
 """Integration tests for Calculation endpoints."""
 
 import pytest
-from app.models.aircraft import Aircraft, WeightStation, FuelTank, CGEnvelope
-from app.schemas.calculation import MassBalanceRequest, PerformanceRequest
+
+from app.models.aircraft import Aircraft, CGEnvelope, FuelTank, WeightStation
+
 
 class TestCalculationAPI:
-    
+
     @pytest.fixture
     def test_aircraft(self, db_session):
         """Create a full test aircraft in DB."""
@@ -22,21 +23,21 @@ class TestCalculationAPI:
         db_session.add(ac)
         db_session.commit()
         db_session.refresh(ac)
-        
+
         # Stations
         stations = [
             WeightStation(aircraft_id=ac.id, name="Pilot", arm_m=2.3, max_weight_kg=110),
             WeightStation(aircraft_id=ac.id, name="Pax", arm_m=2.3, max_weight_kg=110),
         ]
         db_session.add_all(stations)
-        
+
         # Tanks
         tank = FuelTank(
-            aircraft_id=ac.id, name="Main", capacity_l=150, arm_m=2.6, 
+            aircraft_id=ac.id, name="Main", capacity_l=150, arm_m=2.6,
             unusable_fuel_l=2, fuel_type="Jet A-1"
         )
         db_session.add(tank)
-        
+
         # Envelope
         env = CGEnvelope(
             aircraft_id=ac.id, category="normal",
@@ -62,11 +63,11 @@ class TestCalculationAPI:
             "fuel_liters": 100,
             "trip_fuel_liters": 30
         }
-        
+
         res = client.post("/api/v1/calculations/mass-balance", json=payload)
         assert res.status_code == 200
         data = res.json()
-        
+
         assert data["empty_weight_kg"] == 800
         assert data["takeoff_weight_kg"] > 800
         assert len(data["cg_points"]) > 0
@@ -75,7 +76,7 @@ class TestCalculationAPI:
 
     def test_performance_flow(self, client, test_aircraft):
         """Test performance calculation via API."""
-        # Force Mode B (FSM) via aircraft setting locally if needed, 
+        # Force Mode B (FSM) via aircraft setting locally if needed,
         # but default mocked/stubbed logic in Mode A should return valid numbers
         payload = {
             "aircraft_id": test_aircraft.id,
@@ -86,10 +87,10 @@ class TestCalculationAPI:
             "runway_condition": "dry",
             "runway_slope_percent": 0
         }
-        
+
         res = client.post("/api/v1/calculations/performance", json=payload)
         assert res.status_code == 200
         data = res.json()
-        
+
         assert data["takeoff_ground_roll_m"] > 0
         assert data["landing_ground_roll_m"] > 0

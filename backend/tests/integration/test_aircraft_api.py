@@ -1,6 +1,5 @@
 """Integration tests for Aircraft API."""
 
-import pytest
 
 
 class TestAircraftAPI:

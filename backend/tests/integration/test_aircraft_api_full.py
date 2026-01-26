@@ -1,7 +1,7 @@
 """Integration tests for Aircraft CRUD API with high-fidelity profiles."""
 
-import pytest
-from app.utils.data_loader import load_aircraft_profile, get_profile_path
+from app.utils.data_loader import get_profile_path, load_aircraft_profile
+
 
 class TestAircraftCRUD:
     """Integration tests for aircraft management."""
@@ -10,17 +10,17 @@ class TestAircraftCRUD:
         """Verify that the DA40 NG profile can be created via API with all nested data."""
         path = get_profile_path("da40_ng.json")
         profile_data = load_aircraft_profile(path).model_dump()
-        
+
         # 1. Create
         res = client.post("/api/v1/aircraft/", json=profile_data)
         assert res.status_code == 201
         aircraft_id = res.json()["id"]
-        
+
         # 2. Verify Details
         detail_res = client.get(f"/api/v1/aircraft/{aircraft_id}")
         assert detail_res.status_code == 200
         data = detail_res.json()
-        
+
         assert data["registration"] == "D-EBXX"
         assert len(data["weight_stations"]) == 3
         assert len(data["fuel_tanks"]) == 1
@@ -31,7 +31,7 @@ class TestAircraftCRUD:
         """Verify that performance source can be updated."""
         res = client.post("/api/v1/aircraft/", json=sample_aircraft_data)
         aircraft_id = res.json()["id"]
-        
+
         # Update source
         update_data = {"performance_source": "fsm375"}
         put_res = client.put(f"/api/v1/aircraft/{aircraft_id}", json=update_data)
