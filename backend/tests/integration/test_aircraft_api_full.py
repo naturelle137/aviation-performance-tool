@@ -1,9 +1,9 @@
 """Integration tests for Aircraft CRUD API with high-fidelity profiles."""
 
+import pytest
+
 from app.utils.data_loader import get_profile_path, load_aircraft_profile
 
-
-import pytest
 
 @pytest.mark.mvp
 class TestAircraftCRUD:
