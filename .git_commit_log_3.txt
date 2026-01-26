@@ -1,0 +1,35 @@
+husky - DEPRECATED
+
+Please remove the following two lines from .husky/pre-commit:
+
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+They WILL FAIL in v10.0.0
+
+[STARTED] Backing up original state...
+[COMPLETED] Backed up original state in git stash (1f1e4b2)
+[STARTED] Running tasks for staged files...
+[STARTED] package.json ΓÇö 17 files
+[STARTED] frontend/**/*.{js,ts,vue} ΓÇö 3 files
+[STARTED] backend/**/*.py ΓÇö 2 files
+[STARTED] npm run lint --prefix frontend
+[STARTED] backend\.venv\Scripts\python -m ruff check --config backend/pyproject.toml --fix
+[COMPLETED] backend\.venv\Scripts\python -m ruff check --config backend/pyproject.toml --fix
+[COMPLETED] backend/**/*.py ΓÇö 2 files
+[COMPLETED] npm run lint --prefix frontend
+[COMPLETED] frontend/**/*.{js,ts,vue} ΓÇö 3 files
+[COMPLETED] package.json ΓÇö 17 files
+[COMPLETED] Running tasks for staged files...
+[STARTED] Applying modifications from tasks...
+[COMPLETED] Applying modifications from tasks...
+[STARTED] Cleaning up temporary files...
+[COMPLETED] Cleaning up temporary files...
+[chore/enforce-test-coverage-quality-gate 747d00f] chore(compliance): implement strict traceability and shift-left quality gates [REQ-CORE-01]
+ 17 files changed, 682 insertions(+), 36 deletions(-)
+ create mode 100644 .git_add_log.txt
+ create mode 100644 .git_add_log_2.txt
+ create mode 100644 .git_add_log_3.txt
+ create mode 100644 .git_commit_log.txt
+ create mode 100644 .git_commit_log_2.txt
+ create mode 100644 TRACEABILITY_ANALYSIS.md

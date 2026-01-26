@@ -1,0 +1,129 @@
+husky - DEPRECATED
+
+Please remove the following two lines from .husky/pre-push:
+
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+They WILL FAIL in v10.0.0
+
+--------------------------------------------------------
+Quality Gate 1: Pre-Push Verification
+--------------------------------------------------------
+1. Running Frontend Checks...
+   --> Type Checking...
+
+> aviation-performance-frontend@0.1.0 type-check
+> vue-tsc --noEmit
+
+3. Running Tests...
+   --> Frontend Tests with Coverage...
+
+> aviation-performance-frontend@0.1.0 test:coverage
+> vitest run --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mD:/dev/aviation-performance-tool/frontend[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32mΓ£ô[39m src/basic.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32mΓ£ô[39m src/components/charts/__tests__/CGEnvelopeChart.spec.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32mΓ£ô[39m src/components/__tests__/LoadingStation.spec.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+[2m   Start at [22m 16:29:58
+[2m   Duration [22m 1.37s[2m (transform 409ms, setup 0ms, import 970ms, tests 63ms, environment 1.90s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   96.96 |     87.5 |    87.5 |   96.42 |                   
+ components        |    90.9 |      100 |      50 |      90 |                   
+  ...ngStation.vue |    90.9 |      100 |      50 |      90 | 35                
+ components/charts |     100 |       75 |     100 |     100 |                   
+  ...lopeChart.vue |     100 |       75 |     100 |     100 | 37,130            
+-------------------|---------|----------|---------|---------|-------------------
+   --> Backend Tests...
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0 -- D:\dev\aviation-performance-tool\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\dev\aviation-performance-tool\backend
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 42 items / 10 deselected / 32 selected
+
+tests/integration/test_aircraft_api_full.py::TestAircraftCRUD::test_create_da40_ng_full_profile PASSED [  3%]
+tests/integration/test_aircraft_api_full.py::TestAircraftCRUD::test_aircraft_update_performance_source PASSED [  6%]
+tests/integration/test_aircraft_api_full.py::TestAircraftCRUD::test_duplicate_registration_error PASSED [  9%]
+tests/integration/test_calculations_api.py::TestCalculationAPI::test_mass_balance_flow PASSED [ 12%]
+tests/integration/test_calculations_api.py::TestCalculationAPI::test_performance_flow PASSED [ 15%]
+tests/unit/test_aircraft_models.py::test_aircraft_registration_validation PASSED [ 18%]
+tests/unit/test_aircraft_models.py::test_branded_units_in_schema PASSED  [ 21%]
+tests/unit/test_aircraft_models.py::test_multi_tank_creation PASSED      [ 25%]
+tests/unit/test_cg_validation.py::test_validate_point_inside PASSED      [ 28%]
+tests/unit/test_cg_validation.py::test_validate_point_on_boundary PASSED [ 31%]
+tests/unit/test_cg_validation.py::test_validate_point_fore_limit PASSED  [ 34%]
+tests/unit/test_cg_validation.py::test_validate_point_aft_limit PASSED   [ 37%]
+tests/unit/test_cg_validation.py::test_validate_point_weight_limit PASSED [ 40%]
+tests/unit/test_cg_validation.py::test_validate_no_envelope PASSED       [ 43%]
+tests/unit/test_cg_validation.py::test_sloped_boundary_validation PASSED [ 46%]
+tests/unit/test_data_profiles.py::test_da40_ng_profile_validity PASSED   [ 50%]
+tests/unit/test_mass_balance.py::test_mb_calculate_migration PASSED      [ 53%]
+tests/unit/test_mass_balance.py::test_mb_sequential_burn_logic PASSED    [ 56%]
+tests/unit/test_mass_balance.py::test_hazard_h05_detection PASSED        [ 59%]
+tests/unit/test_performance.py::test_performance_mode_b_baseline PASSED  [ 62%]
+tests/unit/test_performance.py::test_performance_density_altitude_effect PASSED [ 65%]
+tests/unit/test_performance.py::test_performance_surface_factors PASSED  [ 68%]
+tests/unit/test_performance.py::test_performance_slope_impact PASSED     [ 71%]
+tests/unit/test_performance.py::test_hazard_h11_tailwind_warning PASSED  [ 75%]
+tests/unit/test_unit_conversion.py::test_kg_to_lb_conversion PASSED      [ 78%]
+tests/unit/test_unit_conversion.py::test_lb_to_kg_conversion PASSED      [ 81%]
+tests/unit/test_unit_conversion.py::test_liter_to_gallon_conversion PASSED [ 84%]
+tests/unit/test_unit_conversion.py::test_gallon_to_liter_conversion PASSED [ 87%]
+tests/unit/test_unit_conversion.py::test_meter_to_feet_conversion PASSED [ 90%]
+tests/unit/test_unit_conversion.py::test_feet_to_meter_conversion PASSED [ 93%]
+tests/unit/test_unit_conversion.py::test_branded_type_inheritance PASSED [ 96%]
+tests/unit/test_unit_conversion.py::test_invalid_types_initialization PASSED [100%]
+
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.7-final-0 _______________
+
+Name                            Stmts   Miss Branch BrPart  Cover   Missing
+---------------------------------------------------------------------------
+app\__init__.py                     0      0      0      0   100%
+app\config.py                      41      9      4      1    73%   42-49, 69
+app\database.py                    16      5      2      1    67%   20, 38-42
+app\main.py                        22      0      2      1    96%   20->22
+app\models\__init__.py              2      0      0      0   100%
+app\models\aircraft.py             80      5      0      0    94%   84, 110, 133, 156, 187
+app\routers\__init__.py             2      0      0      0   100%
+app\routers\aircraft.py            56      9     18      3    81%   25-26, 111, 127, 135->134, 150-158
+app\routers\calculations.py        24      2      4      2    86%   29, 55
+app\routers\health.py               8      2      0      0    75%   11, 17
+app\routers\weather.py             24     16      0      0    33%   14-25, 34-45
+app\schemas\__init__.py             4      0      0      0   100%
+app\schemas\aircraft.py            75      1      4      1    97%   64
+app\schemas\calculation.py         55      0      0      0   100%
+app\schemas\weather.py             21      0      0      0   100%
+app\services\__init__.py            4      0      0      0   100%
+app\services\cg_validation.py      57      2     26      2    95%   84, 97
+app\services\mass_balance.py      106      5     24      7    91%   62->69, 64->69, 138, 143, 190, 224->236, 250->260, 286-287
+app\services\performance.py        77     14     20      5    78%   110-115, 118->136, 140-142, 153-154, 189-190, 198
+app\services\units.py              44      0      2      0   100%
+app\services\weather.py            62     48     14      0    18%   18, 33-50, 65-81, 93-108, 132-150, 168-173, 184, 207-208
+app\utils\data_loader.py            9      0      0      0   100%
+---------------------------------------------------------------------------
+TOTAL                             789    118    120     23    82%
+Required test coverage of 80% reached. Total coverage: 82.29%
+====================== 32 passed, 10 deselected in 1.15s ======================
+Γ£à All Quality Gate checks passed. Pushing...
+remote: 
+remote: Create a pull request for 'chore/enforce-test-coverage-quality-gate' on GitHub by visiting:        
+remote:      https://github.com/naturelle137/aviation-performance-tool/pull/new/chore/enforce-test-coverage-quality-gate        
+remote: 
+To https://github.com/naturelle137/aviation-performance-tool.git
+ * [new branch]      chore/enforce-test-coverage-quality-gate -> chore/enforce-test-coverage-quality-gate

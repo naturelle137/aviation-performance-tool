@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Implemented Aircraft data model (REQ-AD-01, REQ-AD-02) including fuel tanks and weight stations
+- Implemented Fuel Density Map (REQ-FE-01) supporting AvGas, Jet-A1, Mogas types (Mitigates H-02)
+- Implemented Unit Conversion Service (REQ-SYS-03) handling hybrid Imperial/Metric inputs
+- Added `CGEnvelopeChart` component (REQ-MB-02) with real-time visualization
+- Added `LoadingStation` component (REQ-AD-09) with dynamic weight input
+- Added `CalculationView` (REQ-MB-01) orchestrating full M&B workflow
 - Project documentation structure
 - Requirements specification with EARS syntax (`initial_requirements.md`)
 - Safety Traceability Matrix with hazard log (`safety_traceability_matrix.md`)
@@ -24,7 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated .gitignore to exclude internal scripts
 
 ### Security
-- None
+- Implemented Mass Balance Calculation (REQ-MB-01) with precise moment arms
+- Implemented Migration Check (REQ-MB-07, REQ-MB-10) to detect hazardous CG shifts during flight (Mitigates H-05, H-12)
+- Implemented Performance Calculation (REQ-PF-01) supporting Mode B FSM 3/75 fallback (Mitigates H-07)
+- Implemented Density Altitude Calculation (REQ-PF-05) to prevent accidents in "Hot & High" conditions (Mitigates H-06)
+- Implemented Input Validation (REQ-UI-11) for physical plausibility limits
+- Implemented FSM 3/75 Correction Factors (REQ-PF-18) for surface and slope impacts (Mitigates H-08)
 
 ---
 
