@@ -2,11 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import CGEnvelopeChart from '../CGEnvelopeChart.vue'
 import type { CGEnvelope, CGPoint } from '@/types'
-import {
-    Chart as ChartJS,
-    Tooltip,
-    type ChartData,
-    type ChartOptions
+import type {
+    ChartData,
+    ChartOptions
 } from 'chart.js'
 
 // Mock Chart.js to prevent canvas errors in jsdom
@@ -51,6 +49,7 @@ describe('CGEnvelopeChart', () => {
         })
 
         // Access internal component instance to check computed properties
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const vm = wrapper.vm as any
         const chartData = vm.chartData as ChartData<'scatter'>
 
@@ -70,8 +69,10 @@ describe('CGEnvelopeChart', () => {
                 points: mockPoints
             }
         })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const vm = wrapper.vm as any
         const chartData = vm.chartData as ChartData<'scatter'>
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const bgCallback = chartData.datasets[1].backgroundColor as Function
 
         // Point 0: Takeoff (within limits) -> Green
@@ -90,8 +91,10 @@ describe('CGEnvelopeChart', () => {
                 points: mockPoints
             }
         })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const vm = wrapper.vm as any
         const chartOptions = vm.chartOptions as ChartOptions<'scatter'>
+        // eslint-disable-next-line @typescript-eslint/ban-types
         const labelCallback = chartOptions.plugins?.tooltip?.callbacks?.label as Function
 
         // 1. Envelope Tooltip
