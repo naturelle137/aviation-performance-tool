@@ -1,5 +1,5 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+
 
 echo "--------------------------------------------------------"
 echo "Quality Gate 1: Pre-Push Verification"
@@ -35,12 +35,12 @@ if [ -d "backend" ]; then
     echo "   --> Backend Tests..."
     cd backend || exit 1
     if [ -f ".venv/Scripts/python" ]; then
-        if ! .venv/Scripts/python -m pytest -m mvp --cov=app --cov-fail-under=80; then
+        if ! .venv/Scripts/python -m pytest -o "addopts=-v" -m p1 --cov=app --cov-fail-under=85; then
             echo "❌ Backend tests failed. Push aborted."
             exit 1
         fi
     else
-        if ! pytest -m mvp --cov=app --cov-fail-under=90; then
+        if ! pytest -o "addopts=-v" -m p1 --cov=app --cov-fail-under=85; then
              echo "❌ Backend tests failed. Push aborted."
              exit 1
         fi

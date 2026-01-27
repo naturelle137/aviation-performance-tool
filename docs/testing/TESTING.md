@@ -62,10 +62,10 @@ uv run pytest --cov=app --cov-report=html
 
 ### By Priority
 ```bash
-# P1 requirements only
+# P1 requirements only (Safety Critical)
 uv run pytest -m "p1"
 
-# P1 and P2
+# P1 and P2 (MVP)
 uv run pytest -m "p1 or p2"
 ```
 
@@ -116,10 +116,18 @@ def test_metar_auto_populates_temperature():
 |--------|----------|--------------|
 | `services/mass_balance.py` | P1 | 90% |
 | `services/performance.py` | P1 | 90% |
-| `services/unit_conversion.py` | P1 | 95% |
+| `services/unit_conversion.py` | P1 | **95%** (Critical H-01) |
 | `services/cg_validation.py` | P1 | 90% |
 | `services/weather.py` | P2 | 80% |
 | `api/` | P2 | 80% |
+
+### Frontend P1 Components (90% Threshold)
+
+| File | REQ-ID | Rationale |
+|------|--------|-----------|
+| `components/charts/CGEnvelopeChart.vue` | REQ-MB-02 | Visual confirmation of safety limits |
+| `components/LoadingStation.vue` | REQ-UI-10 | Input for weight and balance |
+| `views/CalculationView.vue` | REQ-MB-01 | Main calculation orchestrator |
 
 ---
 

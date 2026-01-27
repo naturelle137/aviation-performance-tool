@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.models.aircraft import Aircraft
+from app.models.aircraft import Aircraft, PerformanceProfile
 from app.services.performance import PerformanceService
 from app.services.units import Celsius, Feet, Kilogram, Knot
 
@@ -17,7 +17,28 @@ def mock_aircraft():
         mtow_kg=Kilogram(1150)
     )
     ac.performance_profiles = []
+    # Hack to allow appending to relationship list without DB session
+    ac.performance_profiles = list(ac.performance_profiles)
     return ac
+
+# ... (existing tests)
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_mode_a_interpolation_fallback(mock_aircraft):
+    """Test Mode A failure falling back to Mode B (lines 109-115)."""
+    # Create invalid Table using real model class
+    profile = PerformanceProfile(
+        profile_type="takeoff",
+        data_tables={"ground_roll": {}} # Empty table triggers KeyError
+    )
+    mock_aircraft.performance_profiles.append(profile)
+
+    service = PerformanceService(mock_aircraft)
+    res = await service.calculate(Kilogram(1150), Feet(0), Celsius(15))
+
+    assert res.calculation_source == "mode_b_fsm375" # Fallback happened
+    assert any("Mode A data incomplete" in w for w in res.warnings)
 
 @pytest.mark.mvp
 @pytest.mark.p1
@@ -128,3 +149,31 @@ async def test_hazard_h11_tailwind_warning(mock_aircraft):
     assert any("Tailwind" in w for w in res.warnings)
     # Factor: +10% per 2kt -> 5kt = +25%
     assert res.takeoff_ground_roll_raw_m == pytest.approx(300 * 1.25)
+
+
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_wind_headwind_and_wet(mock_aircraft):
+    """Test Headwind deduction and Wet surface addition (lines 138-140, 151-153)."""
+    service = PerformanceService(mock_aircraft)
+    res = await service.calculate(
+        Kilogram(1150), Feet(0), Celsius(15),
+        wind_component_kt=Knot(-10), # Headwind
+        runway_condition="wet"
+    )
+    # Headwind -10kt: 1.0 - (10/2 * 0.015) = 1.0 - 0.075 = 0.925
+    # Wet: 1.15
+    # Total: 300 * 0.925 * 1.15
+    expected_raw = 300 * 0.925 * 1.15
+    assert res.takeoff_ground_roll_raw_m == pytest.approx(expected_raw)
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_landing_mode_b_scaling(mock_aircraft):
+    """Test Landing-specific Mode B constant (lines 124-125)."""
+    service = PerformanceService(mock_aircraft)
+    res = await service.calculate(Kilogram(1150), Feet(0), Celsius(15))
+
+    # Landing Base: 250 * (W/MTOW)^1.5. Here Ratio=1.0 -> 250m
+    assert res.landing_ground_roll_raw_m == 250

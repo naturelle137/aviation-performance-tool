@@ -1,0 +1,30 @@
+husky - DEPRECATED
+
+Please remove the following two lines from .husky/pre-commit:
+
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+They WILL FAIL in v10.0.0
+
+[STARTED] Backing up original state...
+[COMPLETED] Backed up original state in git stash (acbb9b4)
+[STARTED] Running tasks for staged files...
+[STARTED] package.json ΓÇö 4 files
+[STARTED] frontend/**/*.{js,ts,vue} ΓÇö 1 file
+[STARTED] backend/**/*.py ΓÇö 0 files
+[SKIPPED] backend/**/*.py ΓÇö no files
+[STARTED] npm run lint --prefix frontend
+[COMPLETED] npm run lint --prefix frontend
+[COMPLETED] frontend/**/*.{js,ts,vue} ΓÇö 1 file
+[COMPLETED] package.json ΓÇö 4 files
+[COMPLETED] Running tasks for staged files...
+[STARTED] Applying modifications from tasks...
+[COMPLETED] Applying modifications from tasks...
+[STARTED] Cleaning up temporary files...
+[COMPLETED] Cleaning up temporary files...
+[develop e8f94d2] docs(traceability): complete frontend layout tagging [REQ-UI-01]
+ 4 files changed, 149 insertions(+)
+ create mode 100644 .git_add_log_6.txt
+ create mode 100644 .git_commit_log_5.txt
+ create mode 100644 .git_push_log_5.txt
