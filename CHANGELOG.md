@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented Input Validation (REQ-UI-11) for physical plausibility limits
 - Implemented FSM 3/75 Correction Factors (REQ-PF-18) for surface and slope impacts (Mitigates H-08)
 
+### Fixed
+- Resolved Husky deprecation warnings in pre-commit and pre-push hooks
+- Cleanup of internal log files from repository
+
 ---
 
 ## Version History
