@@ -220,12 +220,21 @@ This document defines the system behavior using the **EARS** (Easy Approach to R
 
 | Req-ID | Gherkin Feature | Scenario Name | Status |
 |--------|-----------------|---------------|--------|
+| REQ-AC-01 | `mass-balance.feature` | Pilot performs a standard flight preparation | Verified |
 | REQ-AC-04 | `aircraft-crud.feature` | Error when creating duplicate registration | Draft |
-| REQ-MB-03 | `mass-balance.feature` | Warning when CG is out of limits | Draft |
-| REQ-MB-04 | `mass-balance.feature` | Warning when weight exceeds MTOW | Draft |
+| REQ-MB-01 | `mass-balance.feature` | Pilot performs a standard flight preparation | Verified |
+| REQ-MB-02 | `mass-balance.feature` | Pilot performs a standard flight preparation | Verified |
+| REQ-MB-03 | `mass-balance.feature` | Pilot performs a standard flight preparation | Verified |
+| REQ-MB-04 | `mass-balance.feature` | Pilot exceeds MTOM limits | Verified |
 | REQ-MB-06 | `mass-balance.feature` | CG validation using polygonal envelope | Draft |
+| REQ-MB-07 | `mass-balance.feature` | Pilot performs a standard flight preparation | Verified |
+| REQ-PF-05 | `performance.feature` | Pilot plans takeoff at high altitude and temperature | Verified |
 | REQ-PF-12 | `performance.feature` | Bilinear interpolation of performance data | Draft |
+| REQ-PF-13 | `performance.feature` | Pilot plans takeoff at high altitude and temperature | Verified |
+| REQ-PF-14 | `performance.feature` | Pilot plans takeoff at high altitude and temperature | Verified |
+| REQ-PF-15 | `performance.feature` | Pilot plans takeoff at high altitude and temperature | Verified |
 | REQ-SC-02 | `authentication.feature` | User login with Google/Apple | Draft |
+| REQ-UI-10 | `mass-balance.feature` | Pilot exceeds MTOM limits | Verified |
 | REQ-WX-01 | `weather.feature` | Fetch METAR on ICAO entry | Draft |
 
 ---
