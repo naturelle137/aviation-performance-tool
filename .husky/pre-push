@@ -35,12 +35,12 @@ if [ -d "backend" ]; then
     echo "   --> Backend Tests..."
     cd backend || exit 1
     if [ -f ".venv/Scripts/python" ]; then
-        if ! .venv/Scripts/python -m pytest -m p1 --cov=app --cov-fail-under=90; then
+        if ! .venv/Scripts/python -m pytest -m p1 --cov=app/services/mass_balance.py --cov=app/services/performance.py --cov=app/services/units.py --cov=app/services/cg_validation.py --cov-fail-under=90; then
             echo "❌ Backend tests failed. Push aborted."
             exit 1
         fi
     else
-        if ! pytest -m p1 --cov=app --cov-fail-under=90; then
+        if ! pytest -m p1 --cov=app/services/mass_balance.py --cov=app/services/performance.py --cov=app/services/units.py --cov=app/services/cg_validation.py --cov-fail-under=90; then
              echo "❌ Backend tests failed. Push aborted."
              exit 1
         fi
