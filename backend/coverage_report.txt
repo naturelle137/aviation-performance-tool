@@ -1,0 +1,77 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0 -- D:\dev\aviation-performance-tool\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\dev\aviation-performance-tool\backend
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 50 items / 14 deselected / 36 selected
+
+tests/unit/test_aircraft_models.py::test_aircraft_registration_validation PASSED [  2%]
+tests/unit/test_aircraft_models.py::test_branded_units_in_schema PASSED  [  5%]
+tests/unit/test_aircraft_models.py::test_multi_tank_creation PASSED      [  8%]
+tests/unit/test_cg_validation.py::test_validate_point_inside PASSED      [ 11%]
+tests/unit/test_cg_validation.py::test_validate_point_on_boundary PASSED [ 13%]
+tests/unit/test_cg_validation.py::test_validate_point_fore_limit PASSED  [ 16%]
+tests/unit/test_cg_validation.py::test_validate_point_aft_limit PASSED   [ 19%]
+tests/unit/test_cg_validation.py::test_validate_point_weight_limit PASSED [ 22%]
+tests/unit/test_cg_validation.py::test_validate_no_envelope PASSED       [ 25%]
+tests/unit/test_cg_validation.py::test_sloped_boundary_validation PASSED [ 27%]
+tests/unit/test_data_profiles.py::test_da40_ng_profile_validity PASSED   [ 30%]
+tests/unit/test_mass_balance.py::test_mb_calculate_migration PASSED      [ 33%]
+tests/unit/test_mass_balance.py::test_mb_sequential_burn_logic PASSED    [ 36%]
+tests/unit/test_mass_balance.py::test_mb_chart_generation PASSED         [ 38%]
+tests/unit/test_mass_balance.py::test_mb_validation_exceedance PASSED    [ 41%]
+tests/unit/test_mass_balance.py::test_hazard_h05_detection PASSED        [ 44%]
+tests/unit/test_mass_balance.py::test_unknown_station_weight PASSED      [ 47%]
+tests/unit/test_mass_balance.py::test_mb_legacy_compatibility PASSED     [ 50%]
+tests/unit/test_mass_balance.py::test_mb_legacy_no_tanks PASSED          [ 52%]
+tests/unit/test_mass_balance.py::test_chart_generation_edge_cases PASSED [ 55%]
+tests/unit/test_performance.py::test_mode_a_interpolation_fallback PASSED [ 58%]
+tests/unit/test_performance.py::test_performance_mode_b_baseline PASSED  [ 61%]
+tests/unit/test_performance.py::test_performance_density_altitude_effect PASSED [ 63%]
+tests/unit/test_performance.py::test_performance_surface_factors PASSED  [ 66%]
+tests/unit/test_performance.py::test_performance_slope_impact PASSED     [ 69%]
+tests/unit/test_performance.py::test_hazard_h11_tailwind_warning PASSED  [ 72%]
+tests/unit/test_performance.py::test_wind_headwind_and_wet PASSED        [ 75%]
+tests/unit/test_performance.py::test_landing_mode_b_scaling PASSED       [ 77%]
+tests/unit/test_unit_conversion.py::test_kg_to_lb_conversion PASSED      [ 80%]
+tests/unit/test_unit_conversion.py::test_lb_to_kg_conversion PASSED      [ 83%]
+tests/unit/test_unit_conversion.py::test_liter_to_gallon_conversion PASSED [ 86%]
+tests/unit/test_unit_conversion.py::test_gallon_to_liter_conversion PASSED [ 88%]
+tests/unit/test_unit_conversion.py::test_meter_to_feet_conversion PASSED [ 91%]
+tests/unit/test_unit_conversion.py::test_feet_to_meter_conversion PASSED [ 94%]
+tests/unit/test_unit_conversion.py::test_branded_type_inheritance PASSED [ 97%]
+tests/unit/test_unit_conversion.py::test_invalid_types_initialization PASSED [100%]
+
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.7-final-0 _______________
+
+Name                            Stmts   Miss Branch BrPart  Cover   Missing
+---------------------------------------------------------------------------
+app\__init__.py                     0      0      0      0   100%
+app\config.py                      41     10      4      1    71%   42-49, 64, 69
+app\database.py                    16      5      2      1    67%   20, 38-42
+app\main.py                        22      3      2      0    79%   20-22
+app\models\__init__.py              2      0      0      0   100%
+app\models\aircraft.py             80      5      0      0    94%   84, 110, 133, 156, 187
+app\routers\__init__.py             2      0      0      0   100%
+app\routers\aircraft.py            56     40     18      0    22%   25-26, 36-100, 109-115, 125-141, 150-158
+app\routers\calculations.py        24     12      4      0    43%   27-43, 53-71
+app\routers\health.py               8      2      0      0    75%   11, 17
+app\routers\weather.py             24     16      0      0    33%   14-25, 34-45
+app\schemas\__init__.py             4      0      0      0   100%
+app\schemas\aircraft.py            75      1      4      1    97%   64
+app\schemas\calculation.py         55      0      0      0   100%
+app\schemas\weather.py             21      0      0      0   100%
+app\services\__init__.py            4      0      0      0   100%
+app\services\cg_validation.py      57      2     26      2    95%   84, 97
+app\services\mass_balance.py      106      0     24      1    99%   250->260
+app\services\performance.py        77      1     20      1    98%   113, 118->136
+app\services\units.py              44      0      2      0   100%
+app\services\weather.py            62     48     14      0    18%   18, 33-50, 65-81, 93-108, 132-150, 168-173, 184, 207-208
+app\utils\data_loader.py            9      0      0      0   100%
+---------------------------------------------------------------------------
+TOTAL                             789    145    120      7    79%
+====================== 36 passed, 14 deselected in 1.98s ======================
