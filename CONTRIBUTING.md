@@ -119,7 +119,8 @@ Before pushing, the following checks runs automatically via `.husky/pre-push`:
     *   Backend: `ruff check` (if python files present)
 3.  **Tests**:
     *   Frontend: `npm run test:coverage` (Threshold: 75% Global, **90% for P1 Components**)
-    *   Backend: `pytest -m p1 --cov-fail-under=90` (Strict 90% coverage for P1/Safety)
+    *   Backend P1 (Core): `pytest backend/app/services/*/core.py --cov-fail-under=90` (Strict 90% coverage for P1/Safety)
+    *   Backend P2 (Logic): `pytest backend/app/services/*/logic.py --cov-fail-under=80` (Strict 80% coverage for P2/Operational)
 
 **Setup:**
 Run `npm install` in the root directory to activate hooks.

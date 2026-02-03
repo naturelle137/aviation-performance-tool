@@ -100,14 +100,17 @@ jobs:
       - name: Run type checking (mypy)
         run: uv run mypy app/
 
-      - name: 1. MVP Quality Gate (Strict)
-        # Enforce 90% coverage for core MVP services
-        run: uv run pytest -m mvp --cov=app --cov-fail-under=90
+      - name: 1. P1 Core Quality Gate (Strict 90%)
+        # Enforce 90% coverage for Safety Core logic
+        run: uv run pytest app/services/*/core.py --cov=app --cov-fail-under=90
 
-      - name: 2. Full Suite (Advisory)
-        # Run everything else, but don't fail the pipeline for legacy drafts yet
-        run: uv run pytest --cov=app --cov-report=xml --cov-report=term-missing
-        continue-on-error: true
+      - name: 2. P2 Logic Quality Gate (Strict 80%)
+        # Enforce 80% coverage for Operational Logic
+        run: uv run pytest app/services/*/logic.py --cov=app --cov-fail-under=80
+
+      - name: 3. Global App Coverage (Strict 70%)
+        # Minimum baseline for the entire application
+        run: uv run pytest app/ --cov=app --cov-fail-under=70 --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

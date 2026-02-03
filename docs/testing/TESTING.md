@@ -112,10 +112,11 @@ def test_metar_auto_populates_temperature():
 
 ### Per-Module Coverage
 
+### Per-Module Coverage
 | Module | Priority | Min Coverage |
 |--------|----------|--------------|
-| `services/mass_balance.py` | P1 | 90% |
-| `services/performance.py` | P1 | 90% |
+| `services/*/core.py` | P1 (Core Logic) | 90% |
+| `services/*/logic.py` | P2 (Operational) | 80% |
 | `services/unit_conversion.py` | P1 | **95%** (Critical H-01) |
 | `services/cg_validation.py` | P1 | 90% |
 | `services/weather.py` | P2 | 80% |
