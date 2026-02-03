@@ -35,13 +35,31 @@ if [ -d "backend" ]; then
     echo "   --> Backend Tests..."
     cd backend || exit 1
     if [ -f ".venv/Scripts/python" ]; then
-        if ! .venv/Scripts/python -m pytest -o "addopts=-v" -m p1 --cov=app --cov-fail-under=85; then
-            echo "❌ Backend tests failed. Push aborted."
+        # Check P1 (Safety) with 90% coverage
+        echo "   --> Backend P1 Safety Tests (90% coverage)..."
+        if ! .venv/Scripts/python -m pytest -o "addopts=-v" -m p1 --cov=app --cov-fail-under=90; then
+            echo "❌ Backend P1 tests failed (Target: 90%). Push aborted."
+            exit 1
+        fi
+
+        # Check P2 (Operational) with 80% coverage
+        echo "   --> Backend P1+P2 Tests (80% global coverage)..."
+        if ! .venv/Scripts/python -m pytest -o "addopts=-v" -m "p1 or p2" --cov=app --cov-fail-under=80; then
+            echo "❌ Backend P1+P2 tests failed (Target: 80%). Push aborted."
             exit 1
         fi
     else
-        if ! pytest -o "addopts=-v" -m p1 --cov=app --cov-fail-under=85; then
-             echo "❌ Backend tests failed. Push aborted."
+        # Check P1 (Safety) with 90% coverage
+        echo "   --> Backend P1 Safety Tests (90% coverage)..."
+        if ! pytest -o "addopts=-v" -m p1 --cov=app --cov-fail-under=90; then
+             echo "❌ Backend P1 tests failed (Target: 90%). Push aborted."
+             exit 1
+        fi
+
+        # Check P2 (Operational) with 80% coverage
+        echo "   --> Backend P1+P2 Tests (80% global coverage)..."
+        if ! pytest -o "addopts=-v" -m "p1 or p2" --cov=app --cov-fail-under=80; then
+             echo "❌ Backend P1+P2 tests failed (Target: 80%). Push aborted."
              exit 1
         fi
     fi
