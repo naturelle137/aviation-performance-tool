@@ -47,7 +47,6 @@ def mock_aircraft():
     ]
     return ac
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 @pytest.mark.asyncio
@@ -89,7 +88,6 @@ async def test_mb_calculate_migration(mock_aircraft):
     assert "Landing" in phases
     assert "Zero Fuel" in phases
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 @pytest.mark.asyncio
@@ -147,7 +145,6 @@ async def test_mb_validation_exceedance(mock_aircraft):
     assert not result.within_weight_limits
     assert any("exceeds MTOW" in w for w in result.warnings)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 @pytest.mark.asyncio
@@ -234,7 +231,7 @@ async def test_chart_generation_edge_cases(mock_aircraft):
     assert res.chart_image_base64 is not None # Should still generate plot points
 
     # Case 2: Exception during plotting
-    with patch("app.services.mass_balance.plt.subplots", side_effect=Exception("Boom")):
+    with patch("app.services.mass_balance.logic.plt.subplots", side_effect=Exception("Boom")):
         res_fail = await service.calculate([], trip_fuel_liters=Liter(0))
         assert res_fail.chart_image_base64 is None
 

@@ -5,7 +5,7 @@ import pytest
 from app.utils.data_loader import get_profile_path, load_aircraft_profile
 
 
-@pytest.mark.mvp
+@pytest.mark.p1
 class TestAircraftCRUD:
     """Integration tests for aircraft management."""
 
