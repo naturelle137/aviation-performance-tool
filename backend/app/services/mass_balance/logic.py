@@ -6,7 +6,7 @@ and helper utilities for presentation.
 
 import base64
 import io
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -14,13 +14,16 @@ import matplotlib.pyplot as plt
 from app.models.aircraft import CGEnvelope
 from app.schemas.calculation import CGPoint
 
+if TYPE_CHECKING:
+    from app.models.aircraft import Aircraft
+
 matplotlib.use("Agg")
 
 
 class MassBalanceLogic:
     """Operational logic engine for Mass & Balance."""
 
-    def __init__(self, aircraft):
+    def __init__(self, aircraft: "Aircraft") -> None:
         self.aircraft = aircraft
 
     def generate_chart(
