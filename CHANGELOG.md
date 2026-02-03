@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Resolved Husky deprecation warnings in pre-commit and pre-push hooks
 - Cleanup of internal log files from repository
+- **[CRITICAL]** Resolved 500 Error during Aircraft Creation (Migration Regression):
+  - Restored `fuel_capacity_l`, `fuel_arm_m`, and `fuel_density_kg_l` columns in `Aircraft` model to satisfy database NotNull constraints.
+  - Implemented automatic calculation of legacy fuel data from `fuel_tanks` array in backend router to ensure compatibility.
+  - Fixed Frontend/Backend payload mismatch for fuel data (REQ-AC-01).
 
 ---
 
