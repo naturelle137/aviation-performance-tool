@@ -26,11 +26,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Testing strategy and requirements (`TESTING.md`)
 - Component-level documentation (`backend/README.md`, `frontend/README.md`)
 - Priority system (P1-P3) for requirements
+- **3-Tier Quality Gate System** (P1: 90%, P2: 80%, P3: 70%) enforced in CI and pre-push hooks
+- **Import-linter** configuration (`.importlinter`) enforcing P1 module isolation from P2/P3
+- P1 Architectural Constraints documented: Core modules must be side-effect free
 
 ### Changed
 - Harmonized testing thresholds in `TESTING.md` and `CONTRIBUTING.md` (P1 coverage raised to 90%, Unit Conversion to 95%)
 - Updated pre-push hooks to enforce `pytest -m p1`
 - Updated .gitignore to exclude internal scripts
+- **Rewritten `ARCHITECTURE.md`**: Added Core vs Logic split, dependency direction rules, priority mapping
+- **Rewritten `CONTRIBUTING.md`**: 3-tier quality gates with LaTeX notation, P1 isolation rules
+- **Rewritten `TESTING.md`**: Exhaustive per-module coverage table, aligned pytest markers
+- **Rewritten `.husky/pre-push`**: Cross-platform (Windows/Unix), P1 + Global gates only
+- **Updated `.github/workflows/ci.yml`**: 3 explicit gate steps, import-linter integration
+- Added `import-linter>=2.0` to backend dev dependencies
 
 ### Security
 - Implemented Mass Balance Calculation (REQ-MB-01) with precise moment arms

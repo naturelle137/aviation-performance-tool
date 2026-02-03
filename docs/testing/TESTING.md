@@ -2,25 +2,33 @@
 
 ## Overview
 
-Testing for the Aviation Performance Tool follows a safety-critical approach with three testing levels aligned to requirement priorities.
+Testing for the Aviation Performance Tool follows a **3-Tier Quality Gate System** aligned with requirement priorities:
+
+| Gate | Priority | Coverage | Description |
+|------|----------|----------|-------------|
+| **Gate 1** | P1 (Critical/Safety) | $90\%$ | Flight-safe calculations, side-effect free |
+| **Gate 2** | P2 (Operational) | $80\%$ | Significant cockpit value, error reduction |
+| **Gate 3** | P3 (Global Baseline) | $70\%$ | All remaining code (gapless catch-all) |
 
 ---
 
 ## Test Structure
 
 ```
-tests/
-├── unit/                    # Fast, isolated tests
-│   ├── test_mass_balance.py
-│   ├── test_performance.py
-│   ├── test_unit_conversion.py
-│   ├── test_cg_validation.py
-│   └── test_interpolation.py
-├── integration/             # Component interaction tests
+backend/tests/
+├── unit/                        # Fast, isolated tests
+│   ├── test_mass_balance_core.py    # P1
+│   ├── test_mass_balance_logic.py   # P2
+│   ├── test_performance_core.py     # P1
+│   ├── test_performance_logic.py    # P2
+│   ├── test_unit_conversion.py      # P1 (REQ-SYS-03)
+│   ├── test_cg_validation.py        # P1 (REQ-MB-06)
+│   └── test_weather_service.py      # P2 (REQ-WX-01)
+├── integration/                 # Component interaction tests
 │   ├── test_calculation_flow.py
 │   ├── test_api_endpoints.py
-│   └── test_profile_management.py
-└── safety/                  # Hazard-specific tests
+│   └── test_aircraft_api_full.py
+└── safety/                      # Hazard-specific tests
     ├── test_hazard_h01_unit_confusion.py
     ├── test_hazard_h03_interpolation.py
     ├── test_hazard_h05_cg_migration.py
@@ -39,6 +47,18 @@ cd backend
 uv run pytest
 ```
 
+### By Priority Gate
+```bash
+# Gate 1: P1 Safety-Critical (90% required)
+uv run pytest -m "p1" --cov=app --cov-fail-under=90
+
+# Gate 2: P2 Operational (80% required)
+uv run pytest -m "p2" --cov=app --cov-fail-under=80
+
+# Gate 3: Global Baseline (70% required)
+uv run pytest --cov=app --cov-fail-under=70
+```
+
 ### By Category
 ```bash
 # Unit tests only (fast)
@@ -54,26 +74,17 @@ uv run pytest tests/safety/
 uv run pytest tests/safety/test_hazard_h05_cg_migration.py
 ```
 
-### With Coverage
+### With Coverage Report
 ```bash
 uv run pytest --cov=app --cov-report=html
 # Open htmlcov/index.html
-```
-
-### By Priority
-```bash
-# P1 requirements only (Safety Critical)
-uv run pytest -m "p1"
-
-# P1 and P2 (MVP)
-uv run pytest -m "p1 or p2"
 ```
 
 ---
 
 ## Test Markers
 
-Use pytest markers to categorize tests:
+Use pytest markers to categorize tests by priority:
 
 ```python
 import pytest
@@ -88,41 +99,78 @@ def test_cg_outside_envelope_triggers_warning():
 def test_metar_auto_populates_temperature():
     """REQ-WX-02: Auto-populate from METAR."""
     ...
+
+@pytest.mark.p3
+def test_pdf_export_includes_logo():
+    """REQ-DOC-01: PDF export formatting."""
+    ...
 ```
 
-**Available Markers**:
-| Marker | Description |
-|--------|-------------|
-| `@pytest.mark.p1` | P1 (Safety-critical) requirement |
-| `@pytest.mark.p2` | P2 (Operational) requirement |
-| `@pytest.mark.p3` | P3 (Comfort) requirement |
-| `@pytest.mark.safety` | Safety-specific test |
-| `@pytest.mark.slow` | Long-running test |
-| `@pytest.mark.integration` | Integration test |
+### Available Markers
+
+| Marker | Priority | Description |
+|--------|----------|-------------|
+| `@pytest.mark.p1` | P1 | Safety-critical requirement test |
+| `@pytest.mark.p2` | P2 | Operational requirement test |
+| `@pytest.mark.p3` | P3 | Comfort/future requirement test |
+| `@pytest.mark.safety` | — | Safety hazard test (may combine with p1/p2) |
+| `@pytest.mark.slow` | — | Long-running test |
+| `@pytest.mark.integration` | — | Integration test |
+
+### Marker Configuration (`pyproject.toml`)
+
+```toml
+[tool.pytest.ini_options]
+markers = [
+    "p1: P1 Safety-Critical tests (90% coverage required)",
+    "p2: P2 Operational tests (80% coverage required)",
+    "p3: P3 Comfort/Future tests (70% coverage required)",
+    "safety: Safety hazard mitigation test",
+    "slow: Long-running test",
+    "integration: Integration test",
+]
+```
 
 ---
 
-## Coverage Requirements
+## Per-Module Coverage Requirements (Exhaustive)
 
-| Priority | Target Coverage | Enforcement |
-|----------|-----------------|-------------|
-| P1 | 90%+ | CI blocks merge if below |
-| P2 | 80%+ | CI warns if below |
-| P3 | 70%+ | Advisory only |
+### Gate 1: P1 Core ($90\%$ Minimum)
 
-### Per-Module Coverage
+| Module | REQ-IDs | Hazards Mitigated | Min Coverage |
+|--------|---------|-------------------|--------------|
+| `services/mass_balance/core.py` | REQ-MB-01, REQ-MB-07, REQ-MB-11 | H-04, H-05, H-12 | $90\%$ |
+| `services/performance/core.py` | REQ-PF-01, REQ-PF-05, REQ-PF-12, REQ-PF-16, REQ-PF-23 | H-06, H-07, H-11 | $90\%$ |
+| `services/units.py` | REQ-SYS-03, REQ-UQ-04, REQ-AC-13 | **H-01** (Critical) | $95\%$ |
+| `services/cg_validation.py` | REQ-MB-06, REQ-MB-10 | H-05, H-12 | $90\%$ |
 
-### Per-Module Coverage
-| Module | Priority | Min Coverage |
-|--------|----------|--------------|
-| `services/*/core.py` | P1 (Core Logic) | 90% |
-| `services/*/logic.py` | P2 (Operational) | 80% |
-| `services/unit_conversion.py` | P1 | **95%** (Critical H-01) |
-| `services/cg_validation.py` | P1 | 90% |
-| `services/weather.py` | P2 | 80% |
-| `api/` | P2 | 80% |
+### Gate 2: P2 Operational ($80\%$ Minimum)
 
-### Frontend P1 Components (90% Threshold)
+| Module | REQ-IDs | Min Coverage |
+|--------|---------|--------------|
+| `services/mass_balance/logic.py` | REQ-MB-02, REQ-MB-05, REQ-MB-08, REQ-MB-09 | $80\%$ |
+| `services/performance/logic.py` | REQ-PF-03, REQ-PF-06, REQ-PF-08, REQ-PF-18, REQ-PF-19 | $80\%$ |
+| `services/weather.py` | REQ-WX-01 through REQ-WX-06 | $80\%$ |
+| `routers/aircraft.py` | REQ-AC-01 through REQ-AC-06 | $80\%$ |
+| `routers/calculations.py` | REQ-MB-01, REQ-PF-01 (API layer) | $80\%$ |
+| `routers/weather.py` | REQ-WX-01 (API layer) | $80\%$ |
+
+### Gate 3: P3 Global Baseline ($70\%$ Minimum)
+
+| Module | REQ-IDs | Min Coverage |
+|--------|---------|--------------|
+| `models/*.py` | REQ-AD-01 through REQ-AD-18 | $70\%$ |
+| `schemas/*.py` | (Data transfer objects) | $70\%$ |
+| `utils/*.py` | (Utility functions) | $70\%$ |
+| `database.py` | REQ-SYS-01, REQ-SYS-02 | $70\%$ |
+| `config.py` | (Configuration) | $70\%$ |
+| `main.py` | (Application entry) | $70\%$ |
+| `routers/health.py` | (Health check endpoint) | $70\%$ |
+
+> [!IMPORTANT]
+> Gate 3 is a **gapless catch-all**: any module not explicitly listed in Gate 1 or Gate 2 is automatically covered by the $70\%$ global threshold on `backend/app/`.
+
+### Frontend P1 Components ($90\%$ Threshold)
 
 | File | REQ-ID | Rationale |
 |------|--------|-----------|
@@ -191,6 +239,8 @@ These tests validate extreme scenarios from the Safety Traceability Matrix.
 
 ### 1. "The Sahara Switch" (H-06)
 ```python
+@pytest.mark.p1
+@pytest.mark.safety
 def test_sahara_switch_extreme_hot_high():
     """
     +50°C and 5000ft elevation.
@@ -203,7 +253,6 @@ def test_sahara_switch_extreme_hot_high():
     
     result = performance.calculate_takeoff(aircraft, conditions)
     
-    # Either blocked or extrapolated with penalty
     if result.status == "BLOCKED":
         assert "EXTRAPOLATION_LIMIT" in result.error_code
     else:
@@ -213,6 +262,8 @@ def test_sahara_switch_extreme_hot_high():
 
 ### 2. "Burn-out Shift" (H-12)
 ```python
+@pytest.mark.p1
+@pytest.mark.safety
 def test_burnout_shift_cg_migration():
     """
     Maximum passenger load, minimum fuel.
@@ -234,6 +285,8 @@ def test_burnout_shift_cg_migration():
 
 ### 3. "Boundary Breach" (H-11)
 ```python
+@pytest.mark.p1
+@pytest.mark.safety
 def test_boundary_breach_blocks_calculation():
     """
     Temperature 11% above POH maximum.
@@ -253,6 +306,8 @@ def test_boundary_breach_blocks_calculation():
 
 ### 4. "Crosswind Exceedance" (H-14)
 ```python
+@pytest.mark.p2
+@pytest.mark.safety
 def test_crosswind_exceedance_critical_alert():
     """
     20kt crosswind for DA40 (15kt demonstrated limit).
@@ -324,36 +379,34 @@ tests/
 
 ## CI Integration
 
-### GitHub Actions Workflow
+### Quality Gates in GitHub Actions
+
+The CI workflow (`.github/workflows/ci.yml`) runs all 3 gates as separate steps:
 
 ```yaml
-# .github/workflows/test.yml
-name: Tests
+- name: "Gate 1: P1 Core (90%)"
+  run: |
+    uv run pytest \
+      --cov=app/services/mass_balance/core \
+      --cov=app/services/performance/core \
+      --cov=app/services/units \
+      --cov=app/services/cg_validation \
+      --cov-fail-under=90
 
-on: [push, pull_request]
+- name: "Gate 2: P2 Logic (80%)"
+  run: |
+    uv run pytest \
+      --cov=app/services/mass_balance/logic \
+      --cov=app/services/performance/logic \
+      --cov=app/services/weather \
+      --cov=app/routers \
+      --cov-fail-under=80
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      
-      - name: Install uv
-        run: pip install uv
-      
-      - name: Install dependencies
-        run: cd backend && uv sync
-      
-      - name: Run tests
-        run: cd backend && uv run pytest --cov=app --cov-fail-under=80
-      
-      - name: Safety tests
-        run: cd backend && uv run pytest tests/safety/ -v
+- name: "Gate 3: P3 Global (70%)"
+  run: |
+    uv run pytest \
+      --cov=app \
+      --cov-fail-under=70
 ```
 
 ---
@@ -380,5 +433,5 @@ def mock_weather_api(mocker):
 
 ---
 
-> Document Version: 0.1.0
-> Last Updated: 2025-01-23
+> Document Version: 1.0.0  
+> Last Updated: 2026-02-03
