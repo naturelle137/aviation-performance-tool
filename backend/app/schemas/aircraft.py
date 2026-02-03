@@ -135,6 +135,10 @@ class AircraftResponse(AircraftBase):
     created_at: datetime
     updated_at: datetime
 
+    # Computed fields
+    fuel_capacity_l: float
+    fuel_arm_m: float
+
 
 class AircraftWithDetails(AircraftResponse):
     """Schema for aircraft with all related data."""
