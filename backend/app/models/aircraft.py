@@ -38,6 +38,11 @@ class Aircraft(Base):
     max_landing_weight_kg: Mapped[float] = mapped_column(Float, nullable=True)
     max_ramp_weight_kg: Mapped[float] = mapped_column(Float, nullable=True)
 
+    # Legacy fuel data (still required by DB schema)
+    fuel_capacity_l: Mapped[float] = mapped_column(Float, default=0.0)
+    fuel_arm_m: Mapped[float] = mapped_column(Float, default=0.0)
+    fuel_density_kg_l: Mapped[float] = mapped_column(Float, default=0.72)
+
     # Relationships (Fuel data moved to FuelTank relationship)
     fuel_tanks: Mapped[list["FuelTank"]] = relationship(
         "FuelTank",
@@ -80,18 +85,7 @@ class Aircraft(Base):
         cascade="all, delete-orphan",
     )
 
-    @property
-    def fuel_capacity_l(self) -> float:
-        """Total fuel capacity (computed)."""
-        return sum(t.capacity_l for t in self.fuel_tanks)
 
-    @property
-    def fuel_arm_m(self) -> float:
-        """Weighted average fuel arm (computed)."""
-        total_cap = self.fuel_capacity_l
-        if not self.fuel_tanks or total_cap == 0:
-            return 0.0
-        return sum(t.capacity_l * t.arm_m for t in self.fuel_tanks) / total_cap
 
     def __repr__(self) -> str:
         return f"<Aircraft {self.registration} ({self.aircraft_type})>"
