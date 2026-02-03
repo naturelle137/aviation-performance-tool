@@ -16,21 +16,127 @@ The Aviation Performance Tool is a safety-critical web application for General A
 ┌─────────────────────────────┴───────────────────────────────────┐
 │                      Backend (FastAPI)                          │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │                    API Layer                              │  │
+│  │                    API Layer (P2)                         │  │
 │  │   /api/v1/aircraft  /api/v1/calculate  /api/v1/weather   │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │                   Service Layer                           │  │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────────────┐   │  │
-│  │  │ Mass &     │ │Performance │ │ Unit Conversion    │   │  │
-│  │  │ Balance    │ │ Engine     │ │ (Branded Types)    │   │  │
-│  │  └────────────┘ └────────────┘ └────────────────────┘   │  │
+│  │  ┌─────────────────────────────────────────────────────┐ │  │
+│  │  │ P1 Core (Safety-Critical, Side-Effect Free)         │ │  │
+│  │  │  • mass_balance/core.py  • performance/core.py     │ │  │
+│  │  │  • units.py              • cg_validation.py        │ │  │
+│  │  └─────────────────────────────────────────────────────┘ │  │
+│  │  ┌─────────────────────────────────────────────────────┐ │  │
+│  │  │ P2 Logic (Operational)                              │ │  │
+│  │  │  • mass_balance/logic.py  • performance/logic.py   │ │  │
+│  │  │  • weather.py                                       │ │  │
+│  │  └─────────────────────────────────────────────────────┘ │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │                    Data Layer                             │  │
+│  │                    Data Layer (P3)                        │  │
 │  │       Aircraft Profiles (JSON) │ Airport Database         │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Priority Architecture (REQ-SYS-03)
+
+The codebase enforces a **3-Tier Priority System** aligned with the [Priority Definitions](../requirements/initial_requirements.md):
+
+| Priority | Classification | Coverage Target | Description |
+|----------|----------------|-----------------|-------------|
+| **P1** | Critical/Safety | $90\%$ | Essential for flight-safe calculations. Side-effect free. |
+| **P2** | Operational/Efficiency | $80\%$ | Significant value/error reduction in cockpit. |
+| **P3** | Comfort/Future | $70\%$ | Facilitates documentation or administration. |
+
+### Core vs. Logic Split
+
+Each service module is split into two files:
+
+| File | Priority | Architectural Constraint |
+|------|----------|--------------------------|
+| `core.py` | **P1** | **Must be side-effect free**: pure functions, no I/O, no database, no external APIs, no mutable global state. |
+| `logic.py` | **P2** | May perform I/O, orchestrate workflows, and integrate with external services. |
+
+```mermaid
+graph TD
+    subgraph "P1 Core (Side-Effect Free)"
+        CORE_MB["mass_balance/core.py"]
+        CORE_PF["performance/core.py"]
+        UNITS["units.py"]
+        CG["cg_validation.py"]
+    end
+    
+    subgraph "P2 Logic (Operational)"
+        LOGIC_MB["mass_balance/logic.py"]
+        LOGIC_PF["performance/logic.py"]
+        WX["weather.py"]
+        API["routers/*"]
+    end
+    
+    subgraph "P3 Infrastructure"
+        DB["database.py"]
+        MODELS["models/*"]
+        UTILS["utils/*"]
+    end
+    
+    LOGIC_MB --> CORE_MB
+    LOGIC_PF --> CORE_PF
+    LOGIC_MB --> UNITS
+    LOGIC_PF --> CG
+    API --> LOGIC_MB
+    API --> LOGIC_PF
+    API --> WX
+    
+    style CORE_MB fill:#ff6b6b
+    style CORE_PF fill:#ff6b6b
+    style UNITS fill:#ff6b6b
+    style CG fill:#ff6b6b
+    style LOGIC_MB fill:#ffd93d
+    style LOGIC_PF fill:#ffd93d
+    style WX fill:#ffd93d
+    style API fill:#ffd93d
+```
+
+### Dependency Direction Rules
+
+> [!CAUTION]
+> **P1 modules SHALL NOT import from P2 or P3 modules.** This isolation ensures safety-critical calculations cannot be influenced by operational or comfort code.
+
+| Source Module | May Import From |
+|---------------|-----------------|
+| P1 (`core.py`, `units.py`, `cg_validation.py`) | Standard library, approved external packages only |
+| P2 (`logic.py`, `weather.py`, `routers/`) | P1 modules, P3 infrastructure |
+| P3 (`models/`, `utils/`, `database.py`) | P1 modules, P2 modules |
+
+This is enforced by `import-linter` in CI. See [.importlinter](../../.importlinter) for configuration.
+
+---
+
+## Directory Structure to Priority Mapping
+
+```
+backend/app/
+├── routers/                    # P2 (Operational)
+│   ├── aircraft.py
+│   ├── calculations.py
+│   ├── health.py
+│   └── weather.py
+├── services/
+│   ├── mass_balance/
+│   │   ├── core.py            # P1 (Safety-Critical)
+│   │   └── logic.py           # P2 (Operational)
+│   ├── performance/
+│   │   ├── core.py            # P1 (Safety-Critical)
+│   │   └── logic.py           # P2 (Operational)
+│   ├── units.py               # P1 (Safety-Critical) - REQ-SYS-03
+│   ├── cg_validation.py       # P1 (Safety-Critical) - REQ-MB-06
+│   └── weather.py             # P2 (Operational) - REQ-WX-01
+├── models/                     # P3 (Infrastructure)
+├── schemas/                    # P3 (Infrastructure)
+└── utils/                      # P3 (Infrastructure)
 ```
 
 ---
@@ -42,7 +148,7 @@ The Aviation Performance Tool is a safety-critical web application for General A
 | Frontend | Vue 3 + TypeScript | Reactive UI, strong typing |
 | Styling | CSS (Vanilla) | Maximum control, no framework lock-in |
 | Backend | FastAPI (Python) | Fast, async, auto-generated OpenAPI docs |
-| Database | JSON Files (local) | Offline-first, portable profiles |
+| Database | JSON Files (local) | Offline-first, portable profiles (REQ-SYS-01) |
 | Package Manager | uv (Python), npm (Node) | Fast, reliable dependency management |
 | Containerization | Docker | Consistent deployment |
 
@@ -50,64 +156,59 @@ The Aviation Performance Tool is a safety-critical web application for General A
 
 ## Module Architecture
 
-### 1. Mass & Balance Service (`backend/app/services/mass_balance.py`)
+### 1. Mass & Balance Core (`services/mass_balance/core.py`)
 
-**Responsibility**: Calculate total weight and CG position from load station inputs.
-
-**Key Classes**:
-```python
-class LoadStation:
-    """A loading point with weight and arm."""
-    name: str
-    weight_kg: Kilogram
-    arm_m: Meter
-
-class MassBalanceResult:
-    """Result of M&B calculation."""
-    total_weight_kg: Kilogram
-    cg_position_m: Meter
-    takeoff_cg: CGPoint
-    landing_cg: CGPoint
-    is_within_envelope: bool
-    warnings: list[Warning]
-```
-
-**Requirements Implemented**: REQ-MB-01 through REQ-MB-11
-
----
-
-### 2. Performance Engine (`backend/app/services/performance.py`)
-
-**Responsibility**: Calculate takeoff/landing distances using POH data or FSM 3/75.
-
-**Calculation Modes**:
-- **Mode A**: Bilinear interpolation from POH tables
-- **Mode B**: Algorithmic using FSM 3/75 factors
+**Priority**: P1 (Safety-Critical)  
+**Constraint**: Side-effect free
 
 **Key Functions**:
 ```python
-def calculate_takeoff_distance(
-    aircraft: AircraftProfile,
-    conditions: EnvironmentalConditions,
-    runway: Runway
-) -> PerformanceResult: ...
+def calculate_total_moment(stations: list[LoadStation]) -> KilogramMeter:
+    """Pure calculation of total moment. REQ-MB-01."""
 
-def calculate_density_altitude(
-    elevation_ft: float,
-    qnh_hpa: float,
-    temperature_c: float
-) -> float: ...
+def calculate_cg_position(
+    total_mass: Kilogram, 
+    total_moment: KilogramMeter
+) -> Meter:
+    """Pure CG position calculation. REQ-MB-01."""
 ```
 
-**Requirements Implemented**: REQ-PF-01 through REQ-PF-24
+**Requirements Implemented**: REQ-MB-01, REQ-MB-07, REQ-MB-11
 
 ---
 
-### 3. Unit Conversion Service (`backend/app/services/units.py`)
+### 2. Performance Core (`services/performance/core.py`)
 
-**Responsibility**: Prevent unit confusion through branded types (H-01 mitigation).
+**Priority**: P1 (Safety-Critical)  
+**Constraint**: Side-effect free
 
-**Branded Types**:
+**Key Functions**:
+```python
+def calculate_density_altitude(
+    elevation_ft: Feet,
+    qnh_hpa: float,
+    temperature_c: float
+) -> Feet:
+    """Pure density altitude calculation. REQ-PF-05."""
+
+def calculate_pressure_altitude(
+    elevation_ft: Feet,
+    qnh_hpa: float
+) -> Feet:
+    """PA = Elevation + (1013.25 - QNH) × 30. REQ-PF-16."""
+```
+
+**Requirements Implemented**: REQ-PF-01, REQ-PF-05, REQ-PF-12, REQ-PF-16, REQ-PF-23
+
+---
+
+### 3. Unit Conversion (`services/units.py`)
+
+**Priority**: P1 (Safety-Critical)  
+**Constraint**: Side-effect free
+
+Prevents unit confusion through branded types (H-01 mitigation).
+
 ```python
 class Kilogram(float): """Mass in kilograms."""
 class Pound(float): """Mass in pounds."""
@@ -117,24 +218,14 @@ class Meter(float): """Length in meters."""
 class Feet(float): """Length in feet."""
 ```
 
-**Conversion is explicit**:
-```python
-# Type-safe conversions
-kg = Kilogram(100)
-lb = kg.to_pounds()  # Returns Pound(220.46)
-
-# Compile-time safety (with type checker)
-def calculate_moment(weight: Kilogram, arm: Meter) -> KilogramMeter:
-    return KilogramMeter(weight * arm)
-```
-
 **Requirements Implemented**: REQ-SYS-03, REQ-UQ-04, REQ-AC-13
 
 ---
 
-### 4. CG Validation Service (`backend/app/services/cg_validation.py`)
+### 4. CG Validation (`services/cg_validation.py`)
 
-**Responsibility**: Validate CG position against aircraft envelope.
+**Priority**: P1 (Safety-Critical)  
+**Constraint**: Side-effect free
 
 **Algorithm**: Point-in-Polygon (Ray Casting) for polygonal envelopes.
 
@@ -150,67 +241,6 @@ def is_within_envelope(
 ```
 
 **Requirements Implemented**: REQ-MB-06, REQ-MB-10
-
----
-
-## Data Models
-
-### Aircraft Profile Schema (`data/schemas/aircraft.json`)
-
-```json
-{
-  "registration": "D-EABC",
-  "manufacturer": "Diamond",
-  "model": "DA40 D",
-  "icao_designator": "DA40",
-  "version": {
-    "valid_from": "2024-01-15",
-    "weighing_report": "WR-2024-001"
-  },
-  "status": "verified",
-  "units": {
-    "mass": "kg",
-    "volume": "L",
-    "arm": "m"
-  },
-  "basic_empty_mass": {
-    "weight_kg": 850.5,
-    "arm_m": 2.345
-  },
-  "fuel_tanks": [
-    {
-      "name": "Main Tank",
-      "capacity_l": 148,
-      "unusable_l": 7.6,
-      "arm_m": 2.42,
-      "fuel_type": "JET-A1"
-    }
-  ],
-  "loading_stations": [
-    {
-      "name": "Pilot",
-      "arm_m": 2.32,
-      "default_kg": 80
-    }
-  ],
-  "envelopes": {
-    "normal": {
-      "mtom_kg": 1200,
-      "vertices": [
-        {"arm_m": 2.20, "mass_kg": 800},
-        {"arm_m": 2.45, "mass_kg": 800},
-        {"arm_m": 2.50, "mass_kg": 1200},
-        {"arm_m": 2.25, "mass_kg": 1200}
-      ]
-    }
-  },
-  "performance": {
-    "mode": "table",
-    "takeoff_tables": "...",
-    "landing_tables": "..."
-  }
-}
-```
 
 ---
 
@@ -244,42 +274,6 @@ Layer 6: Audit Trail (Logging)
 
 ---
 
-## File Structure
-
-```
-aviation-performance-tool/
-├── backend/
-│   ├── app/
-│   │   ├── api/              # API route handlers
-│   │   │   └── v1/
-│   │   ├── models/           # Pydantic data models
-│   │   ├── services/         # Business logic
-│   │   │   ├── mass_balance.py
-│   │   │   ├── performance.py
-│   │   │   ├── units.py
-│   │   │   └── cg_validation.py
-│   │   └── core/             # Configuration, utilities
-│   ├── data/                 # Aircraft profiles, airport DB
-│   └── tests/
-│       ├── unit/
-│       ├── integration/
-│       └── safety/
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # Vue components
-│   │   ├── views/            # Page-level views
-│   │   ├── services/         # API clients
-│   │   └── stores/           # Pinia state management
-│   └── tests/
-└── docs/
-    ├── architecture/         # This documentation
-    ├── api/                  # API documentation
-    ├── requirements/         # System requirements
-    └── development/          # Development guides
-```
-
----
-
 ## Deployment Architecture
 
 ```
@@ -301,18 +295,5 @@ aviation-performance-tool/
 
 ---
 
-## Future Considerations
-
-### Phase 2 Additions
-- Weather service integration (METAR/TAF API)
-- Wind component calculator
-
-### Phase 3 Additions
-- Cloud sync (Firebase/Firestore)
-- PDF export service
-- User authentication
-
----
-
-> Document Version: 0.1.0
-> Last Updated: 2025-01-23
+> Document Version: 1.0.0  
+> Last Updated: 2026-02-03

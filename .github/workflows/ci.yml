@@ -68,7 +68,9 @@ jobs:
           echo "ℹ️ Only chore/refactor (maintenance) detected. Changelog update optional."
           exit 0
 
-  # Backend Tests
+  # ============================================================================
+  # Backend Tests - 3-Tier Quality Gate System
+  # ============================================================================
   backend-test:
     name: Backend Tests
     needs: filter
@@ -100,14 +102,55 @@ jobs:
       - name: Run type checking (mypy)
         run: uv run mypy app/
 
-      - name: 1. MVP Quality Gate (Strict)
-        # Enforce 90% coverage for core MVP services
-        run: uv run pytest -m mvp --cov=app --cov-fail-under=90
+      # --------------------------------------------------------------------------
+      # Import Linter: P1 Isolation Check
+      # Ensures P1 modules do not import from P2/P3 modules
+      # --------------------------------------------------------------------------
+      - name: "P1 Isolation Check (import-linter)"
+        run: uv run lint-imports
 
-      - name: 2. Full Suite (Advisory)
-        # Run everything else, but don't fail the pipeline for legacy drafts yet
-        run: uv run pytest --cov=app --cov-report=xml --cov-report=term-missing
-        continue-on-error: true
+      # --------------------------------------------------------------------------
+      # Gate 1: P1 Core Safety (90% coverage required)
+      # Files: services/*/core.py, units.py, cg_validation.py
+      # Reference: REQ-MB-01, REQ-PF-01, REQ-SYS-03
+      # --------------------------------------------------------------------------
+      - name: "Gate 1: P1 Core Safety (90%)"
+        run: |
+          uv run pytest tests/ \
+            --cov=app/services/mass_balance/core \
+            --cov=app/services/performance/core \
+            --cov=app/services/units \
+            --cov=app/services/cg_validation \
+            --cov-fail-under=90 \
+            --cov-report=term-missing
+
+      # --------------------------------------------------------------------------
+      # Gate 2: P2 Operational Logic (80% coverage required)
+      # Files: services/*/logic.py, weather.py, routers/
+      # Reference: REQ-WX-01, REQ-MB-05, REQ-PF-03
+      # --------------------------------------------------------------------------
+      - name: "Gate 2: P2 Operational Logic (80%)"
+        run: |
+          uv run pytest tests/ \
+            --cov=app/services/mass_balance/logic \
+            --cov=app/services/performance/logic \
+            --cov=app/services/weather \
+            --cov=app/routers \
+            --cov-fail-under=80 \
+            --cov-report=term-missing
+
+      # --------------------------------------------------------------------------
+      # Gate 3: P3 Global Baseline (70% coverage required)
+      # Files: All backend/app/ (gapless catch-all)
+      # Reference: Catches all P3 components not covered by Gates 1/2
+      # --------------------------------------------------------------------------
+      - name: "Gate 3: P3 Global Baseline (70%)"
+        run: |
+          uv run pytest tests/ \
+            --cov=app \
+            --cov-fail-under=70 \
+            --cov-report=xml \
+            --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

@@ -10,7 +10,6 @@ import pytest
 from app.services.units import Feet, Gallon, Kilogram, Liter, Meter, Pound
 
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_kg_to_lb_conversion():
@@ -23,7 +22,6 @@ def test_kg_to_lb_conversion():
     assert isinstance(lb, Pound)
     assert lb == pytest.approx(220.462, abs=1e-3)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_lb_to_kg_conversion():
@@ -36,7 +34,6 @@ def test_lb_to_kg_conversion():
     assert isinstance(kg, Kilogram)
     assert kg == pytest.approx(100.0, abs=1e-3)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_liter_to_gallon_conversion():
@@ -49,7 +46,6 @@ def test_liter_to_gallon_conversion():
     assert isinstance(gallon, Gallon)
     assert gallon == pytest.approx(26.417, abs=1e-3)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_gallon_to_liter_conversion():
@@ -62,7 +58,6 @@ def test_gallon_to_liter_conversion():
     assert isinstance(liter, Liter)
     assert liter == pytest.approx(100.0, abs=1e-3)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_meter_to_feet_conversion():
@@ -75,7 +70,6 @@ def test_meter_to_feet_conversion():
     assert isinstance(feet, Feet)
     assert feet == pytest.approx(32.808, abs=1e-3)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_feet_to_meter_conversion():
@@ -88,7 +82,6 @@ def test_feet_to_meter_conversion():
     assert isinstance(meter, Meter)
     assert meter == pytest.approx(10.0, abs=1e-3)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_branded_type_inheritance():
@@ -106,7 +99,6 @@ def test_branded_type_inheritance():
     rebranded = Kilogram(result)
     assert isinstance(rebranded, Kilogram)
 
-@pytest.mark.mvp
 @pytest.mark.p1
 @pytest.mark.safety
 def test_invalid_types_initialization():

@@ -233,7 +233,7 @@ def test_delete_aircraft(client, seeded_aircraft):
     get_response = client.get(f"/api/v1/aircraft/{seeded_aircraft.id}")
     assert get_response.status_code == 404
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.integration
 def test_get_metar(client):
     """Test fetching METAR (uses mock in test/dev env)."""
@@ -241,7 +241,7 @@ def test_get_metar(client):
     assert response.status_code == 200
     assert response.json()["station"] == "EDDF"
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.integration
 def test_get_taf(client):
     """Test fetching TAF (uses mock in test/dev env)."""
@@ -249,7 +249,7 @@ def test_get_taf(client):
     assert response.status_code == 200
     assert response.json()["station"] == "EDDF"
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.integration
 def test_get_metar_not_found(client):
     """Test METAR 404 error handling."""
@@ -260,7 +260,7 @@ def test_get_metar_not_found(client):
         response = client.get("/api/v1/weather/metar/ZZZZ")
         assert response.status_code == 404
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.integration
 def test_get_taf_error(client):
     """Test TAF 503 error handling."""

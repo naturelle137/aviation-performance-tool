@@ -16,7 +16,7 @@ def weather_service(monkeypatch):
     monkeypatch.setattr("app.services.weather.get_settings", mock_get_settings)
     return WeatherService()
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.asyncio
 async def test_get_metar_parsing(weather_service):
     """Test parsing of a real-like METAR response from AVWX."""
@@ -50,7 +50,7 @@ async def test_get_metar_parsing(weather_service):
         assert metar.qnh_hpa == 1018
         assert metar.clouds[0]["height_ft"] == 3000
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.asyncio
 async def test_get_taf_parsing(weather_service):
     """Test parsing of a real-like TAF response from AVWX."""
@@ -76,7 +76,7 @@ async def test_get_taf_parsing(weather_service):
         assert taf.station == "EDDF"
         assert taf.valid_from.year == 2023
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.asyncio
 async def test_parse_visibility_sm(weather_service):
     """Test visibility conversion from statute miles."""
@@ -101,7 +101,7 @@ async def test_parse_visibility_sm(weather_service):
         # 10 sm = 16093.4 m -> 16093
         assert metar.visibility_m == 16093
 
-@pytest.mark.p1
+@pytest.mark.p2
 @pytest.mark.asyncio
 async def test_api_404_error(weather_service):
     """Test 404 handling."""
