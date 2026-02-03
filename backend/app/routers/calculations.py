@@ -33,9 +33,10 @@ async def calculate_mass_balance(
 
     # Perform calculation
     service = MassBalanceService(aircraft)
-    result = service.calculate(
+    result = await service.calculate(
         weight_inputs=request.weight_inputs,
-        fuel_liters=request.fuel_liters,
+        fuel_inputs=request.fuel_tanks,
+        fuel_liters_legacy=request.fuel_liters,
         trip_fuel_liters=request.trip_fuel_liters,
     )
 
@@ -58,7 +59,7 @@ async def calculate_performance(
 
     # Perform calculation
     service = PerformanceService(aircraft)
-    result = service.calculate(
+    result = await service.calculate(
         weight_kg=request.weight_kg,
         pressure_altitude_ft=request.pressure_altitude_ft,
         temperature_c=request.temperature_c,

@@ -1,116 +1,242 @@
-"""Unit tests for Mass Balance service."""
+"""Unit tests for the Mass & Balance Service."""
 
 import pytest
-from unittest.mock import MagicMock
 
+from app.models.aircraft import Aircraft, CGEnvelope, FuelTank, FuelType, WeightStation
+from app.schemas.calculation import FuelInput, WeightInput
 from app.services.mass_balance import MassBalanceService
-from app.schemas.calculation import WeightInput
+from app.services.units import Kilogram, Liter, Meter
 
 
-class TestMassBalanceService:
-    """Tests for MassBalanceService."""
+@pytest.fixture
+def mock_aircraft():
+    """Create a mock aircraft for M&B testing."""
+    # DA40-like configuration
+    ac = Aircraft(
+        registration="D-EBPF",
+        aircraft_type="DA40",
+        manufacturer="Diamond",
+        empty_weight_kg=Kilogram(750),
+        empty_arm_m=Meter(2.4),
+        mtow_kg=Kilogram(1150)
+    )
 
-    @pytest.fixture
-    def mock_aircraft(self):
-        """Create a mock aircraft for testing."""
-        aircraft = MagicMock()
-        aircraft.registration = "D-EABC"
-        aircraft.empty_weight_kg = 743.0
-        aircraft.empty_arm_m = 2.35
-        aircraft.mtow_kg = 1157.0
-        aircraft.max_landing_weight_kg = 1157.0
-        aircraft.fuel_capacity_l = 200.0
-        aircraft.fuel_arm_m = 2.40
-        aircraft.fuel_density_kg_l = 0.72
-        aircraft.weight_stations = []
-        aircraft.cg_envelopes = []
-        return aircraft
+    # Fuel Tanks (Two tanks to test sequential burn)
+    ac.fuel_tanks = [
+        FuelTank(name="Main", capacity_l=Liter(100), arm_m=Meter(2.45), fuel_type=FuelType.AVGAS_100LL),
+        FuelTank(name="Aux", capacity_l=Liter(50), arm_m=Meter(2.65), fuel_type=FuelType.AVGAS_100LL)
+    ]
 
-    def test_calculate_basic(self, mock_aircraft):
-        """Test basic M&B calculation."""
-        service = MassBalanceService(mock_aircraft)
+    # Weight Stations
+    ac.weight_stations = [
+        WeightStation(name="Pilot", arm_m=Meter(2.35), sort_order=0),
+        WeightStation(name="Baggage", arm_m=Meter(3.10), sort_order=1)
+    ]
 
-        result = service.calculate(
-            weight_inputs=[],
-            fuel_liters=100.0,
-            trip_fuel_liters=50.0,
+    # Simple CG Envelope
+    ac.cg_envelopes = [
+        CGEnvelope(
+            category="normal",
+            polygon_points=[
+                {"weight_kg": 600, "arm_m": 2.30},
+                {"weight_kg": 1150, "arm_m": 2.35},
+                {"weight_kg": 1150, "arm_m": 2.50},
+                {"weight_kg": 600, "arm_m": 2.55}
+            ]
         )
+    ]
+    return ac
 
-        # Check fuel weight calculation
-        expected_fuel_weight = 100.0 * 0.72
-        assert result.fuel_weight_kg == expected_fuel_weight
+@pytest.mark.mvp
+@pytest.mark.p1
+@pytest.mark.safety
+@pytest.mark.asyncio
+async def test_mb_calculate_migration(mock_aircraft):
+    """Verify CG migration calculation (Takeoff vs Landing).
 
-        # Check takeoff weight
-        expected_takeoff = 743.0 + expected_fuel_weight
-        assert result.takeoff_weight_kg == expected_takeoff
+    Traceability: REQ-MB-07, H-12
+    """
+    service = MassBalanceService(mock_aircraft)
 
-        # Check landing weight
-        expected_landing = expected_takeoff - (50.0 * 0.72)
-        assert result.landing_weight_kg == expected_landing
+    weights = [
+        WeightInput(station_name="Pilot", weight_kg=Kilogram(80)),
+        WeightInput(station_name="Baggage", weight_kg=Kilogram(20))
+    ]
 
-    def test_calculate_with_payload(self, mock_aircraft):
-        """Test M&B calculation with payload."""
-        # Add a weight station
-        station = MagicMock()
-        station.name = "Pilot"
-        station.arm_m = 2.35
-        station.max_weight_kg = 110.0
-        mock_aircraft.weight_stations = [station]
+    # Planned fuel: 100L in Main, 20L in Aux
+    fuel = [
+        FuelInput(tank_name="Main", fuel_l=Liter(100)),
+        FuelInput(tank_name="Aux", fuel_l=Liter(20))
+    ]
 
-        service = MassBalanceService(mock_aircraft)
+    # Trip burn: 30L
+    result = await service.calculate(
+        weight_inputs=weights,
+        fuel_inputs=fuel,
+        trip_fuel_liters=Liter(30)
+    )
 
-        result = service.calculate(
-            weight_inputs=[WeightInput(station_name="Pilot", weight_kg=85.0)],
-            fuel_liters=100.0,
-            trip_fuel_liters=0,
-        )
+    # 1. Verify Weights
+    assert result.empty_weight_kg == 750
+    assert result.payload_kg == 100
+    # 120L * 0.72 = 86.4 kg fuel
+    assert result.fuel_weight_kg == pytest.approx(86.4)
+    assert result.takeoff_weight_kg == pytest.approx(750 + 100 + 86.4)
 
-        assert result.payload_kg == 85.0
-        assert result.takeoff_weight_kg == 743.0 + 85.0 + (100.0 * 0.72)
+    # 2. Verify Migration Points
+    phases = [p.label for p in result.cg_points]
+    assert "Takeoff" in phases
+    assert "Landing" in phases
+    assert "Zero Fuel" in phases
 
-    def test_mtow_exceeded_warning(self, mock_aircraft):
-        """Test that warning is generated when MTOW exceeded."""
-        mock_aircraft.mtow_kg = 800.0  # Set low MTOW
+@pytest.mark.mvp
+@pytest.mark.p1
+@pytest.mark.safety
+@pytest.mark.asyncio
+async def test_mb_sequential_burn_logic(mock_aircraft):
+    """Verify that fuel is burned from Aux tank first (sequential logic).
 
-        service = MassBalanceService(mock_aircraft)
+    Aux is aft of Main, so burning it first should shift CG forward.
+    """
+    service = MassBalanceService(mock_aircraft)
 
-        result = service.calculate(
-            weight_inputs=[],
-            fuel_liters=100.0,
-            trip_fuel_liters=0,
-        )
+    weights = [WeightInput(station_name="Pilot", weight_kg=Kilogram(80))]
 
-        assert not result.within_weight_limits
-        assert any("exceeds MTOW" in w for w in result.warnings)
+    # 50L in Main, 50L in Aux
+    fuel = [
+        FuelInput(tank_name="Main", fuel_l=Liter(50)),
+        FuelInput(tank_name="Aux", fuel_l=Liter(50))
+    ]
 
-    def test_cg_points_created(self, mock_aircraft):
-        """Test that takeoff and landing CG points are created."""
-        service = MassBalanceService(mock_aircraft)
+    # Burn 50L (should empty Aux)
+    result = await service.calculate(
+        weights,
+        fuel_inputs=fuel,
+        trip_fuel_liters=Liter(50)
+    )
 
-        result = service.calculate(
-            weight_inputs=[],
-            fuel_liters=100.0,
-            trip_fuel_liters=50.0,
-        )
+    to_point = next(p for p in result.cg_points if p.label == "Takeoff")
+    ldg_point = next(p for p in result.cg_points if p.label == "Landing")
 
-        assert len(result.cg_points) == 2
-        assert result.cg_points[0].label == "Takeoff"
-        assert result.cg_points[1].label == "Landing"
+    # Takeoff CG should be further aft than landing CG
+    assert to_point.arm_m > ldg_point.arm_m
 
-    def test_station_max_weight_warning(self, mock_aircraft):
-        """Test warning when station max weight exceeded."""
-        station = MagicMock()
-        station.name = "Pilot"
-        station.arm_m = 2.35
-        station.max_weight_kg = 80.0  # Low max
-        mock_aircraft.weight_stations = [station]
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_mb_chart_generation(mock_aircraft):
+    """Verify chart generation logic to cover plotting code."""
+    service = MassBalanceService(mock_aircraft)
+    # Simple valid case
+    result = await service.calculate(
+        weight_inputs=[WeightInput(station_name="Pilot", weight_kg=Kilogram(80))],
+        trip_fuel_liters=Liter(10)
+    )
+    assert result.chart_image_base64 is not None
+    assert len(result.chart_image_base64) > 100
 
-        service = MassBalanceService(mock_aircraft)
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_mb_validation_exceedance(mock_aircraft):
+    """Test explicit MTOW exceedance warning branch."""
+    service = MassBalanceService(mock_aircraft)
+    # Overload: 500kg pilot
+    result = await service.calculate(
+        weight_inputs=[WeightInput(station_name="Pilot", weight_kg=Kilogram(500))],
+        trip_fuel_liters=Liter(0)
+    )
+    assert not result.within_weight_limits
+    assert any("exceeds MTOW" in w for w in result.warnings)
 
-        result = service.calculate(
-            weight_inputs=[WeightInput(station_name="Pilot", weight_kg=100.0)],
-            fuel_liters=50.0,
-            trip_fuel_liters=0,
-        )
+@pytest.mark.mvp
+@pytest.mark.p1
+@pytest.mark.safety
+@pytest.mark.asyncio
+async def test_hazard_h05_detection(mock_aircraft):
+    """Verify detection of Landing safety hazard.
 
-        assert any("exceeds maximum" in w for w in result.warnings)
+    Simulation: Aircraft loaded heavy aft (Baggage) so that ZFW/Landing is unsafe,
+    but Fuel (forward of baggage) makes Takeoff safe.
+    Migration: Safe -> Unsafe.
+    """
+    # Modify aircraft for this test to ensure robust physics
+    # Move Main Tank way forward to ensure fuel pulls CG forward strongly
+    mock_aircraft.fuel_tanks[0].arm_m = Meter(1.0)
+
+    service = MassBalanceService(mock_aircraft)
+
+    # Load aircraft heavy aft (Baggage)
+    # 200kg @ 3.1m -> Huge aft moment
+    weights = [WeightInput(station_name="Baggage", weight_kg=Kilogram(200))]
+
+    # Add Fuel (Main Tank @ 1.0m)
+    fuel = [FuelInput(tank_name="Main", fuel_l=Liter(100))]
+
+    # Burn all fuel
+    result = await service.calculate(
+        weights,
+        fuel_inputs=fuel,
+        trip_fuel_liters=Liter(100)
+    )
+
+    to_point = next(p for p in result.cg_points if p.label == "Takeoff")
+    ldg_point = next(p for p in result.cg_points if p.label == "Landing")
+
+    # With fuel @ 1.0m, TO CG should be much further forward than ZFW/Ldg CG
+    assert to_point.within_limits is True
+    assert ldg_point.within_limits is False
+    assert any("CRITICAL: CG shifts OUT OF LIMITS" in w for w in result.warnings)
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_unknown_station_weight(mock_aircraft):
+    """Test that unknown stations default to arm=0 and do not crash."""
+    service = MassBalanceService(mock_aircraft)
+    result = await service.calculate(
+        weight_inputs=[WeightInput(station_name="Ghost", weight_kg=Kilogram(80))]
+    )
+    # 80kg * 0 arm = 0 moment
+    assert result.payload_kg == 80
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_mb_legacy_compatibility(mock_aircraft):
+    service = MassBalanceService(mock_aircraft)
+    result = await service.calculate(
+        weight_inputs=[],
+        fuel_liters_legacy=100.0
+    )
+    # 100L * 0.72 = 72kg
+    assert result.fuel_weight_kg == 72.0
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_mb_legacy_no_tanks(mock_aircraft):
+    """Test legacy input with no tanks defined (should ignore fuel)."""
+    mock_aircraft.fuel_tanks = []
+    service = MassBalanceService(mock_aircraft)
+    result = await service.calculate(
+        weight_inputs=[],
+        fuel_liters_legacy=100.0
+    )
+    assert result.fuel_weight_kg == 0
+
+
+@pytest.mark.p1
+@pytest.mark.asyncio
+async def test_chart_generation_edge_cases(mock_aircraft):
+    """Test chart generation with no envelope and exception handling."""
+    from unittest.mock import patch
+
+    # Case 1: No Envelope (Polygon Points missing)
+    mock_aircraft.cg_envelopes = []
+    service = MassBalanceService(mock_aircraft)
+    res = await service.calculate([], trip_fuel_liters=Liter(0))
+    assert res.chart_image_base64 is not None # Should still generate plot points
+
+    # Case 2: Exception during plotting
+    with patch("app.services.mass_balance.plt.subplots", side_effect=Exception("Boom")):
+        res_fail = await service.calculate([], trip_fuel_liters=Liter(0))
+        assert res_fail.chart_image_base64 is None
+
+
+

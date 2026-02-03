@@ -51,7 +51,25 @@ function openAddDialog(): void {
 
 async function saveAircraft(): Promise<void> {
   try {
-    await aircraftStore.create(formData.value)
+    // Transform legacy flat fuel data to fuel_tanks array
+    const payload = {
+      ...formData.value,
+      fuel_tanks: [
+        {
+          name: 'Main Tank',
+          capacity_l: formData.value.fuel_capacity_l,
+          arm_m: formData.value.fuel_arm_m,
+          unusable_fuel_l: 0,
+          fuel_type: 'AvGas 100LL' as const,
+          default_quantity_l: formData.value.fuel_capacity_l,
+        },
+      ],
+    }
+    // Remove legacy fields from payload to avoid confusion (backend ignores them anyway)
+    // delete payload.fuel_capacity_l
+    // delete payload.fuel_arm_m
+
+    await aircraftStore.create(payload)
     showAddDialog.value = false
     toast.add({
       severity: 'success',

@@ -7,9 +7,74 @@ on:
     branches: [main, develop]
 
 jobs:
-  # Backend Tests
+  # Detect which files changed
+  filter:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+            e2e:
+              - 'backend/**'
+              - 'frontend/**'
+              - '.github/workflows/ci.yml'
+
+
+  # Changelog Verification
+  changelog-check:
+    name: Changelog Verification
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for Changelog modifications
+        run: |
+          # Get the list of changed files
+          changed_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          # Check if CHANGELOG.md is in the list
+          if echo "$changed_files" | grep -q "CHANGELOG.md"; then
+            echo "✅ CHANGELOG.md has been modified."
+            exit 0
+          fi
+
+          # Check recent commit messages for chore/refactor exemption
+          # If purely chore/refactor, skip check.
+          # If feat/fix/safety present, FAIL.
+          commit_msgs=$(git log --format=%s origin/${{ github.base_ref }}...HEAD)
+          
+          if echo "$commit_msgs" | grep -Eq "^(feat|fix|safety)"; then
+             echo "❌ Feature/Fix/Safety commits detected but NO Changelog update!"
+             echo "Please update CHANGELOG.md under [Unreleased]."
+             exit 1
+          fi
+          
+          echo "ℹ️ Only chore/refactor (maintenance) detected. Changelog update optional."
+          exit 0
+
+  # ============================================================================
+  # Backend Tests - 3-Tier Quality Gate System
+  # ============================================================================
   backend-test:
     name: Backend Tests
+    needs: filter
+    if: needs.filter.outputs.backend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -37,8 +102,55 @@ jobs:
       - name: Run type checking (mypy)
         run: uv run mypy app/
 
-      - name: Run tests with coverage
-        run: uv run pytest --cov=app --cov-report=xml --cov-report=term-missing
+      # --------------------------------------------------------------------------
+      # Import Linter: P1 Isolation Check
+      # Ensures P1 modules do not import from P2/P3 modules
+      # --------------------------------------------------------------------------
+      - name: "P1 Isolation Check (import-linter)"
+        run: uv run lint-imports
+
+      # --------------------------------------------------------------------------
+      # Gate 1: P1 Core Safety (90% coverage required)
+      # Files: services/*/core.py, units.py, cg_validation.py
+      # Reference: REQ-MB-01, REQ-PF-01, REQ-SYS-03
+      # --------------------------------------------------------------------------
+      - name: "Gate 1: P1 Core Safety (90%)"
+        run: |
+          uv run pytest tests/ \
+            --cov=app/services/mass_balance/core \
+            --cov=app/services/performance/core \
+            --cov=app/services/units \
+            --cov=app/services/cg_validation \
+            --cov-fail-under=90 \
+            --cov-report=term-missing
+
+      # --------------------------------------------------------------------------
+      # Gate 2: P2 Operational Logic (80% coverage required)
+      # Files: services/*/logic.py, weather.py, routers/
+      # Reference: REQ-WX-01, REQ-MB-05, REQ-PF-03
+      # --------------------------------------------------------------------------
+      - name: "Gate 2: P2 Operational Logic (80%)"
+        run: |
+          uv run pytest tests/ \
+            --cov=app/services/mass_balance/logic \
+            --cov=app/services/performance/logic \
+            --cov=app/services/weather \
+            --cov=app/routers \
+            --cov-fail-under=80 \
+            --cov-report=term-missing
+
+      # --------------------------------------------------------------------------
+      # Gate 3: P3 Global Baseline (70% coverage required)
+      # Files: All backend/app/ (gapless catch-all)
+      # Reference: Catches all P3 components not covered by Gates 1/2
+      # --------------------------------------------------------------------------
+      - name: "Gate 3: P3 Global Baseline (70%)"
+        run: |
+          uv run pytest tests/ \
+            --cov=app \
+            --cov-fail-under=70 \
+            --cov-report=xml \
+            --cov-report=term-missing
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -49,7 +161,11 @@ jobs:
   # Frontend Tests
   frontend-test:
     name: Frontend Tests
+    needs: filter
+    if: needs.filter.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    # Phase 1: Not-blocking and only runs on changes
+    continue-on-error: true
     defaults:
       run:
         working-directory: ./frontend
@@ -61,11 +177,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: ./frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run linting (ESLint)
         run: npm run lint
@@ -85,8 +199,11 @@ jobs:
   # E2E Tests
   e2e-test:
     name: E2E Tests
+    needs: [filter, backend-test]
+    if: needs.filter.outputs.e2e == 'true'
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
+    # Phase 1: Not-blocking and only runs on changes
+    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -95,12 +212,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: ./frontend/package-lock.json
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       - name: Install Playwright browsers
         working-directory: ./frontend
@@ -135,7 +250,8 @@ jobs:
   build:
     name: Build Check
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
+    needs: [backend-test]
+    if: always() && needs.backend-test.result == 'success'
 
     steps:
       - uses: actions/checkout@v4

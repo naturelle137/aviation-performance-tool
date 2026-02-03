@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.aircraft import Aircraft, CGEnvelope, WeightStation
+from app.models.aircraft import Aircraft, CGEnvelope, FuelTank, WeightStation
 from app.schemas.aircraft import (
     AircraftCreate,
     AircraftResponse,
@@ -44,19 +44,36 @@ async def create_aircraft(
             detail=f"Aircraft with registration {aircraft_data.registration} already exists",
         )
 
+    # Calculate legacy fuel columns from tanks to satisfy DB constraints and keep data consistent
+    total_fuel_l = 0.0
+    weighted_moment = 0.0
+    if aircraft_data.fuel_tanks:
+        for t in aircraft_data.fuel_tanks:
+            cap = float(t.capacity_l)
+            arm = float(t.arm_m)
+            total_fuel_l += cap
+            weighted_moment += cap * arm
+
+    avg_arm = weighted_moment / total_fuel_l if total_fuel_l > 0 else 0.0
+
     # Create aircraft
     aircraft = Aircraft(
         registration=aircraft_data.registration.upper(),
         aircraft_type=aircraft_data.aircraft_type,
         manufacturer=aircraft_data.manufacturer,
-        empty_weight_kg=aircraft_data.empty_weight_kg,
-        empty_arm_m=aircraft_data.empty_arm_m,
-        mtow_kg=aircraft_data.mtow_kg,
-        max_landing_weight_kg=aircraft_data.max_landing_weight_kg,
-        max_ramp_weight_kg=aircraft_data.max_ramp_weight_kg,
-        fuel_capacity_l=aircraft_data.fuel_capacity_l,
-        fuel_arm_m=aircraft_data.fuel_arm_m,
-        fuel_density_kg_l=aircraft_data.fuel_density_kg_l,
+        empty_weight_kg=float(aircraft_data.empty_weight_kg),
+        empty_arm_m=float(aircraft_data.empty_arm_m),
+        mtow_kg=float(aircraft_data.mtow_kg),
+        max_landing_weight_kg=float(aircraft_data.max_landing_weight_kg)
+        if aircraft_data.max_landing_weight_kg
+        else None,
+        max_ramp_weight_kg=float(aircraft_data.max_ramp_weight_kg)
+        if aircraft_data.max_ramp_weight_kg
+        else None,
+        fuel_capacity_l=total_fuel_l,
+        fuel_arm_m=avg_arm,
+        fuel_density_kg_l=0.72,
+        performance_source=aircraft_data.performance_source,
     )
     db.add(aircraft)
     db.commit()
@@ -67,12 +84,29 @@ async def create_aircraft(
         station = WeightStation(
             aircraft_id=aircraft.id,
             name=station_data.name,
-            arm_m=station_data.arm_m,
-            max_weight_kg=station_data.max_weight_kg,
-            default_weight_kg=station_data.default_weight_kg,
+            arm_m=float(station_data.arm_m),
+            max_weight_kg=float(station_data.max_weight_kg)
+            if station_data.max_weight_kg is not None
+            else None,
+            default_weight_kg=float(station_data.default_weight_kg)
+            if station_data.default_weight_kg is not None
+            else None,
             sort_order=idx,
         )
         db.add(station)
+
+    # Add fuel tanks if provided
+    for tank_data in aircraft_data.fuel_tanks or []:
+        tank = FuelTank(
+            aircraft_id=aircraft.id,
+            name=tank_data.name,
+            capacity_l=float(tank_data.capacity_l),
+            arm_m=float(tank_data.arm_m),
+            unusable_fuel_l=float(tank_data.unusable_fuel_l),
+            fuel_type=tank_data.fuel_type,
+            default_quantity_l=float(tank_data.default_quantity_l),
+        )
+        db.add(tank)
 
     # Add CG envelopes if provided
     for envelope_data in aircraft_data.cg_envelopes or []:

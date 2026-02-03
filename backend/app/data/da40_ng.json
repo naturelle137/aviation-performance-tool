@@ -1,0 +1,72 @@
+{
+    "registration": "D-EBXX",
+    "aircraft_type": "DA40",
+    "manufacturer": "Diamond",
+    "empty_weight_kg": 900.0,
+    "empty_arm_m": 2.450,
+    "mtow_kg": 1310.0,
+    "max_landing_weight_kg": 1280.0,
+    "max_ramp_weight_kg": 1314.0,
+    "performance_source": "manufacturer",
+    "weight_stations": [
+        {
+            "name": "Front Seats",
+            "arm_m": 2.30,
+            "max_weight_kg": 190.0,
+            "sort_order": 1
+        },
+        {
+            "name": "Rear Seats",
+            "arm_m": 3.12,
+            "max_weight_kg": 170.0,
+            "sort_order": 2
+        },
+        {
+            "name": "Baggage Extension",
+            "arm_m": 3.84,
+            "max_weight_kg": 30.0,
+            "sort_order": 3
+        }
+    ],
+    "fuel_tanks": [
+        {
+            "name": "Main Tank",
+            "capacity_l": 147.6,
+            "arm_m": 2.63,
+            "unusable_fuel_l": 3.8,
+            "fuel_type": "Jet A-1",
+            "default_quantity_l": 147.6
+        }
+    ],
+    "cg_envelopes": [
+        {
+            "category": "normal",
+            "polygon_points": [
+                {
+                    "arm_m": 2.40,
+                    "weight_kg": 940
+                },
+                {
+                    "arm_m": 2.40,
+                    "weight_kg": 1080
+                },
+                {
+                    "arm_m": 2.46,
+                    "weight_kg": 1280
+                },
+                {
+                    "arm_m": 2.48,
+                    "weight_kg": 1310
+                },
+                {
+                    "arm_m": 2.59,
+                    "weight_kg": 1310
+                },
+                {
+                    "arm_m": 2.59,
+                    "weight_kg": 940
+                }
+            ]
+        }
+    ]
+}

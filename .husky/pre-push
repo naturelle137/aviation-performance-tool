@@ -1,0 +1,121 @@
+#!/bin/sh
+
+# ==============================================================================
+# Quality Gate 1: Pre-Push Verification
+# ==============================================================================
+# This hook enforces P1 (90%) and Global (70%) coverage gates before pushing.
+# P2 (80%) is validated only in CI to optimize local push times.
+#
+# Reference: docs/testing/TESTING.md, CONTRIBUTING.md
+# ==============================================================================
+
+set -e  # Exit on first error
+
+echo "========================================================"
+echo "Quality Gate 1: Pre-Push Verification"
+echo "========================================================"
+echo ""
+
+# ------------------------------------------------------------------------------
+# 1. Frontend Checks
+# ------------------------------------------------------------------------------
+echo "1. Running Frontend Checks..."
+cd frontend || exit 1
+
+echo "   --> Type Checking..."
+if ! npm run type-check; then
+    echo "❌ Frontend type check failed. Push aborted."
+    exit 1
+fi
+
+echo "   --> Frontend Tests with Coverage..."
+if ! npm run test:coverage; then
+    echo "❌ Frontend tests failed. Push aborted."
+    exit 1
+fi
+
+cd ..
+
+# ------------------------------------------------------------------------------
+# 2. Backend Checks
+# ------------------------------------------------------------------------------
+if [ -d "backend" ]; then
+    echo ""
+    echo "2. Running Backend Checks..."
+    cd backend || exit 1
+
+    # Detect Python path (Windows vs Unix)
+    if [ -f ".venv/Scripts/python.exe" ]; then
+        # Windows
+        PYTHON=".venv/Scripts/python.exe"
+        PYTEST=".venv/Scripts/pytest.exe"
+    elif [ -f ".venv/bin/python" ]; then
+        # Unix/Linux/macOS
+        PYTHON=".venv/bin/python"
+        PYTEST=".venv/bin/pytest"
+    else
+        # Fallback to system pytest (uv environment)
+        PYTHON="python"
+        PYTEST="pytest"
+    fi
+
+    echo "   Using Python: $PYTHON"
+
+    # --------------------------------------------------------------------------
+    # Gate 1: P1 Core Safety (90% coverage required)
+    # Files: services/*/core.py, units.py, cg_validation.py
+    # --------------------------------------------------------------------------
+    echo ""
+    echo "   --> Gate 1: P1 Core Safety (Target: 90%)"
+    echo "       Files: services/*/core.py, units.py, cg_validation.py"
+
+    if ! $PYTEST tests/ \
+        --cov=app/services/mass_balance/core \
+        --cov=app/services/performance/core \
+        --cov=app/services/units \
+        --cov=app/services/cg_validation \
+        --cov-fail-under=90 \
+        --cov-report=term-missing:skip-covered \
+        -q; then
+        echo ""
+        echo "❌ Gate 1 FAILED: P1 Core coverage below 90%"
+        echo "   Safety-critical code must maintain 90% coverage."
+        echo "   Push aborted."
+        exit 1
+    fi
+    echo "   ✅ Gate 1 PASSED: P1 Core coverage >= 90%"
+
+    # --------------------------------------------------------------------------
+    # Gate 3: Global Baseline (70% coverage required)
+    # Files: All backend/app/ (gapless catch-all)
+    # --------------------------------------------------------------------------
+    echo ""
+    echo "   --> Gate 3: Global Baseline (Target: 70%)"
+    echo "       Files: All backend/app/"
+
+    if ! $PYTEST tests/ \
+        --cov=app \
+        --cov-fail-under=70 \
+        --cov-report=term-missing:skip-covered \
+        -q; then
+        echo ""
+        echo "❌ Gate 3 FAILED: Global coverage below 70%"
+        echo "   All code must maintain at least 70% coverage."
+        echo "   Push aborted."
+        exit 1
+    fi
+    echo "   ✅ Gate 3 PASSED: Global coverage >= 70%"
+
+    cd ..
+fi
+
+# ------------------------------------------------------------------------------
+# Success
+# ------------------------------------------------------------------------------
+echo ""
+echo "========================================================"
+echo "✅ All Quality Gates PASSED"
+echo "========================================================"
+echo ""
+echo "Note: Gate 2 (P2 Logic, 80%) is validated in CI only."
+echo "Pushing..."

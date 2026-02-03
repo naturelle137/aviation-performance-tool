@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `changelog-check` CI job to enforce documentation updates in PRs
+- Implemented Aircraft data model (REQ-AD-01, REQ-AD-02) including fuel tanks and weight stations
+- Implemented Fuel Density Map (REQ-FE-01) supporting AvGas, Jet-A1, Mogas types (Mitigates H-02)
+- Implemented Unit Conversion Service (REQ-SYS-03) handling hybrid Imperial/Metric inputs
+- Added `CGEnvelopeChart` component (REQ-MB-02) with real-time visualization
+- Added `LoadingStation` component (REQ-AD-09) with dynamic weight input
+- Added `CalculationView` (REQ-MB-01) orchestrating full M&B workflow
 - Project documentation structure
 - Requirements specification with EARS syntax (`initial_requirements.md`)
 - Safety Traceability Matrix with hazard log (`safety_traceability_matrix.md`)
@@ -19,12 +26,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Testing strategy and requirements (`TESTING.md`)
 - Component-level documentation (`backend/README.md`, `frontend/README.md`)
 - Priority system (P1-P3) for requirements
+- **3-Tier Quality Gate System** (P1: 90%, P2: 80%, P3: 70%) enforced in CI and pre-push hooks
+- **Import-linter** configuration (`.importlinter`) enforcing P1 module isolation from P2/P3
+- P1 Architectural Constraints documented: Core modules must be side-effect free
 
 ### Changed
+- Harmonized testing thresholds in `TESTING.md` and `CONTRIBUTING.md` (P1 coverage raised to 90%, Unit Conversion to 95%)
+- Updated pre-push hooks to enforce `pytest -m p1`
 - Updated .gitignore to exclude internal scripts
+- **Rewritten `ARCHITECTURE.md`**: Added Core vs Logic split, dependency direction rules, priority mapping
+- **Rewritten `CONTRIBUTING.md`**: 3-tier quality gates with LaTeX notation, P1 isolation rules
+- **Rewritten `TESTING.md`**: Exhaustive per-module coverage table, aligned pytest markers
+- **Rewritten `.husky/pre-push`**: Cross-platform (Windows/Unix), P1 + Global gates only
+- **Updated `.github/workflows/ci.yml`**: 3 explicit gate steps, import-linter integration
+- Added `import-linter>=2.0` to backend dev dependencies
 
 ### Security
-- None
+- Implemented Mass Balance Calculation (REQ-MB-01) with precise moment arms
+- Implemented Migration Check (REQ-MB-07, REQ-MB-10) to detect hazardous CG shifts during flight (Mitigates H-05, H-12)
+- Implemented Performance Calculation (REQ-PF-01) supporting Mode B FSM 3/75 fallback (Mitigates H-07)
+- Implemented Density Altitude Calculation (REQ-PF-05) to prevent accidents in "Hot & High" conditions (Mitigates H-06)
+- Implemented Input Validation (REQ-UI-11) for physical plausibility limits
+- Implemented FSM 3/75 Correction Factors (REQ-PF-18) for surface and slope impacts (Mitigates H-08)
+
+### Fixed
+- Resolved Husky deprecation warnings in pre-commit and pre-push hooks
+- Cleanup of internal log files from repository
+- **[CRITICAL]** Resolved 500 Error during Aircraft Creation (Migration Regression):
+  - Restored `fuel_capacity_l`, `fuel_arm_m`, and `fuel_density_kg_l` columns in `Aircraft` model to satisfy database NotNull constraints.
+  - Implemented automatic calculation of legacy fuel data from `fuel_tanks` array in backend router to ensure compatibility.
+  - Fixed Frontend/Backend payload mismatch for fuel data (REQ-AC-01).
 
 ---
 

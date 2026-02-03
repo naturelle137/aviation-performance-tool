@@ -1,0 +1,66 @@
+# ==============================================================================
+# Import Linter Configuration
+# ==============================================================================
+# Enforces P1 (Safety-Critical) module isolation.
+# P1 modules must not import from P2 (Operational) or P3 (Infrastructure) modules.
+#
+# Reference: docs/architecture/ARCHITECTURE.md
+# ==============================================================================
+
+[importlinter]
+root_package = app
+include_external_packages = false
+
+# ------------------------------------------------------------------------------
+# Contract 1: P1 Core modules must not import from P2 Logic modules
+# ------------------------------------------------------------------------------
+[importlinter:contract:p1_no_p2_imports]
+name = "P1 Core must not import from P2 Logic"
+type = forbidden
+source_modules =
+    app.services.mass_balance.core
+    app.services.performance.core
+    app.services.units
+    app.services.cg_validation
+forbidden_modules =
+    app.services.mass_balance.logic
+    app.services.performance.logic
+    app.services.weather
+    app.routers
+
+# ------------------------------------------------------------------------------
+# Contract 2: P1 Core modules must not import from P3 Infrastructure
+# ------------------------------------------------------------------------------
+[importlinter:contract:p1_no_p3_imports]
+name = "P1 Core must not import from P3 Infrastructure"
+type = forbidden
+source_modules =
+    app.services.mass_balance.core
+    app.services.performance.core
+    app.services.units
+    app.services.cg_validation
+forbidden_modules =
+    app.database
+    app.models
+    app.schemas
+    app.utils
+    app.config
+
+# ------------------------------------------------------------------------------
+# Contract 3: Layered architecture (P1 <- P2 <- P3)
+# ------------------------------------------------------------------------------
+[importlinter:contract:layered_architecture]
+name = "Priority-based layered architecture"
+type = layers
+layers =
+    app.routers
+    app.services.mass_balance.logic
+    app.services.performance.logic
+    app.services.weather
+    |
+    app.services.mass_balance.core
+    app.services.performance.core
+    app.services.units
+    app.services.cg_validation
+containers =
+    app

@@ -32,6 +32,7 @@ dev = [
     "mypy>=1.8.0",
     "ruff>=0.1.13",
     "pytest-bdd>=7.0.1",
+    "import-linter>=2.0",
 ]
 
 [build-system]
@@ -44,6 +45,9 @@ packages = ["app"]
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+exclude = ["src/archive"]
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -55,9 +59,10 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function call Depends in argument defaults (FastAPI dependency injection)
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["app"]
 
 [tool.mypy]
@@ -69,11 +74,21 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "p1: P1 Safety-Critical tests (90% coverage required)",
+    "p2: P2 Operational tests (80% coverage required)",
+    "p3: P3 Comfort/Future tests (70% coverage required)",
+    "safety: Safety hazard mitigation test",
+    "slow: Long-running test",
+    "integration: Integration test",
+
+]
 addopts = "-v --cov=app --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["app"]
 branch = true
+omit = ["src/archive/*"]
 
 [tool.coverage.report]
 exclude_lines = [

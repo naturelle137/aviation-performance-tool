@@ -1,4 +1,11 @@
 <script setup lang="ts">
+/**
+ * Main Calculation View.
+ * Implements:
+ * - REQ-MB-01: Mass & Balance calculation workflow.
+ * - REQ-MB-02: Display CG envelope chart.
+ * - REQ-PF-01: Performance calculation workflow.
+ */
 import { ref, computed, onMounted } from 'vue'
 import { useAircraftStore, useCalculationStore } from '@/stores'
 import { useToast } from 'primevue/usetoast'
@@ -8,6 +15,8 @@ import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 import Message from 'primevue/message'
+import LoadingStation from '@/components/LoadingStation.vue'
+import CGEnvelopeChart from '@/components/charts/CGEnvelopeChart.vue'
 import type { WeightInput, RunwayCondition } from '@/types'
 
 const toast = useToast()
@@ -169,13 +178,12 @@ async function calculatePerformance(): Promise<void> {
           <template #title>Weights</template>
           <template #content>
             <div class="weight-inputs">
-              <div v-for="(input, index) in weightInputs" :key="index" class="weight-row">
-                <label>{{ input.station_name }}</label>
-                <InputNumber
-                  v-model="input.weight_kg"
-                  suffix=" kg"
-                  :min="0"
-                  class="weight-input"
+              <div v-if="aircraftStore.currentAircraft && weightInputs.length > 0">
+                <LoadingStation
+                  v-for="(station, index) in aircraftStore.currentAircraft.weight_stations"
+                  :key="station.id"
+                  :station="station"
+                  v-model:weight="weightInputs[index].weight_kg"
                 />
               </div>
 
@@ -343,7 +351,17 @@ async function calculatePerformance(): Promise<void> {
             </div>
 
             <!-- Chart -->
-            <div v-if="calculationStore.massBalanceResult.chart_image_base64" class="chart-container">
+            <div 
+              v-if="aircraftStore.currentAircraft?.cg_envelopes?.length && calculationStore.massBalanceResult.cg_points" 
+              class="chart-container"
+            >
+              <CGEnvelopeChart
+                :envelope="aircraftStore.currentAircraft.cg_envelopes[0]"
+                :points="calculationStore.massBalanceResult.cg_points"
+              />
+            </div>
+            <!-- Fallback to static image if interactive not possible (legacy support) -->
+            <div v-else-if="calculationStore.massBalanceResult.chart_image_base64" class="chart-container">
               <img
                 :src="`data:image/png;base64,${calculationStore.massBalanceResult.chart_image_base64}`"
                 alt="M&B Chart"
